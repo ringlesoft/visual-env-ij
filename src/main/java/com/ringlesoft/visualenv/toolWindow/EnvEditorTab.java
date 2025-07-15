@@ -70,26 +70,16 @@ public class EnvEditorTab extends JPanel {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(JBUI.Borders.empty(5));
         
-        JPanel fileSelectorPanel = new JPanel(new BorderLayout());
+        // Create a panel with custom layout to achieve the 3:2:1 ratio
+        JPanel fileSelectorPanel = new JPanel();
+        fileSelectorPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = JBUI.insetsRight(5);  // Add some spacing between components
         
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.add(new JBLabel("File:"), BorderLayout.WEST);
-        
-        envFileSelector = new ComboBox<>();
-        envFileSelector.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String selected = (String) envFileSelector.getSelectedItem();
-                if (selected != null) {
-                    selectedEnvFile = LocalFileSystem.getInstance().findFileByPath(selected);
-                    loadEnvFile(selected);
-                }
-            }
-        });
-        leftPanel.add(envFileSelector, BorderLayout.CENTER);
-        
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(new JBLabel("Filter:"), BorderLayout.WEST);
+        // Filter field taking 3/6 of space
         filterField = new JBTextField();
+        filterField.putClientProperty("placeholder.text", "Search");
         filterField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -106,10 +96,41 @@ public class EnvEditorTab extends JPanel {
                 filterVariables();
             }
         });
-        rightPanel.add(filterField, BorderLayout.CENTER);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.5;  // 3/6 of space
+        fileSelectorPanel.add(filterField, gbc);
         
-        fileSelectorPanel.add(leftPanel, BorderLayout.CENTER);
-        fileSelectorPanel.add(rightPanel, BorderLayout.EAST);
+        // File label and dropdown taking 2/6 of space
+        JPanel filePanel = new JPanel(new BorderLayout(5, 0));
+        filePanel.add(new JBLabel("File:"), BorderLayout.WEST);
+        
+        envFileSelector = new ComboBox<>();
+        envFileSelector.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String selected = (String) envFileSelector.getSelectedItem();
+                if (selected != null) {
+                    selectedEnvFile = LocalFileSystem.getInstance().findFileByPath(fileBasenameToPath.getOrDefault(selected, selected));
+                    loadEnvFile(selected);
+                }
+            }
+        });
+        filePanel.add(envFileSelector, BorderLayout.CENTER);
+        
+        gbc.gridx = 1;
+        gbc.weightx = 0.33;  // 2/6 of space
+        fileSelectorPanel.add(filePanel, gbc);
+        
+        // Refresh button taking 1/6 of space
+        JButton refreshButton = new JButton();
+        refreshButton.setText("↻");
+        refreshButton.setToolTipText("Refresh environment files");
+        refreshButton.addActionListener(e -> loadEnvFiles());
+        
+        gbc.gridx = 2;
+        gbc.weightx = 0.17;  // 1/6 of space
+        gbc.insets = JBUI.emptyInsets();  // Remove right margin for last component
+        fileSelectorPanel.add(refreshButton, gbc);
         
         panel.add(fileSelectorPanel, BorderLayout.NORTH);
         
