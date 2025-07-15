@@ -12,6 +12,7 @@ import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -21,6 +22,7 @@ import java.awt.event.ItemEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Tab for displaying and editing environment variables
@@ -28,22 +30,23 @@ import java.util.List;
 public class EnvEditorTab extends JPanel {
     
     private final Project project;
-    private final EnvVariableService envService;
+    private final EnvVariableService envVariableService;
     
     private JComboBox<String> envFileSelector;
     private JTextField filterField;
     private JPanel envVarsPanel;
     private final Map<String, EnvGroupPanel> groupPanels = new HashMap<>();
-    
+    private VirtualFile selectedEnvFile;
+
     /**
      * Create a new Environment editor tab
      *
      * @param project    The current project
-     * @param envService The environment variable service
+     * @param envVariableService The environment variable service
      */
-    public EnvEditorTab(Project project, EnvVariableService envService) {
+    public EnvEditorTab(Project project, EnvVariableService envVariableService) {
         this.project = project;
-        this.envService = envService;
+        this.envVariableService = envVariableService;
         
         setLayout(new BorderLayout());
         
@@ -76,6 +79,7 @@ public class EnvEditorTab extends JPanel {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 String selected = (String) envFileSelector.getSelectedItem();
                 if (selected != null) {
+                    selectedEnvFile = LocalFileSystem.getInstance().findFileByPath(selected);
                     loadEnvFile(selected);
                 }
             }
@@ -145,8 +149,8 @@ public class EnvEditorTab extends JPanel {
         envFileSelector.removeAllItems();
         
         // Get common env filenames from the active profile
-        String[] commonEnvFiles = envService.getActiveProfile().getCommonEnvFiles();
-        List<EnvFileDefinition> envFileDefinitions = envService.getActiveProfile().getEnvFileDefinitions();
+        String[] commonEnvFiles = envVariableService.getActiveProfile().getCommonEnvFiles();
+        List<EnvFileDefinition> envFileDefinitions = envVariableService.getActiveProfile().getEnvFileDefinitions();
         
         // Look for these files in the project root
         for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
@@ -168,7 +172,7 @@ public class EnvEditorTab extends JPanel {
     private void loadEnvFile(String path) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file != null) {
-            List<EnvVariable> variables = envService.parseEnvFile(file);
+            List<EnvVariable> variables = envVariableService.parseEnvFile(file);
             updateVariableGroups(variables);
         }
     }
@@ -177,82 +181,35 @@ public class EnvEditorTab extends JPanel {
      * Update the UI with variables organized by group
      */
     private void updateVariableGroups(List<EnvVariable> variables) {
-        // Clear existing panels
-        groupPanels.clear();
-        
-        // Use the direct reference to the envVarsPanel
+        // Group variables by group name
+        Map<String, List<EnvVariable>> groupedVars = variables.stream()
+                .collect(Collectors.groupingBy(EnvVariable::getGroup));
+
+        // Add panels for each group
         envVarsPanel.removeAll();
-        
-        // Debug
-        System.out.println("Updating variable groups with " + variables.size() + " variables");
-        
-        // Group variables by group
-        Map<String, List<EnvVariable>> groupedVariables = new HashMap<>();
-        
-        for (EnvVariable variable : variables) {
-            String group = variable.getGroup() != null ? variable.getGroup() : "other";
-            groupedVariables.computeIfAbsent(group, k -> new ArrayList<>())
-                    .add(variable);
+        groupPanels.clear();
+
+        for (Map.Entry<String, List<EnvVariable>> entry : groupedVars.entrySet()) {
+            String groupName = entry.getKey();
+            List<EnvVariable> groupVars = entry.getValue();
+
+            EnvGroupPanel groupPanel = new EnvGroupPanel(groupName, groupVars, envVariableService, this::updateStatus, this);
+            groupPanels.put(groupName, groupPanel);
+            envVarsPanel.add(groupPanel);
         }
-        
-        // Create panels for each group
-        EnvProfile profile = envService.getActiveProfile();
-        boolean anyGroupAdded = false;
-        
-        for (String group : profile.getAllGroups()) {
-            List<EnvVariable> groupVars = groupedVariables.getOrDefault(group, Collections.emptyList());
-            if (!groupVars.isEmpty()) {
-                System.out.println("Creating panel for group: " + group + " with " + groupVars.size() + " variables");
-                EnvGroupPanel groupPanel = new EnvGroupPanel(group, groupVars, envService, variableName -> {
-                    // Handle variable selection or action
-                    // For example, you might want to show details or allow editing
-                    System.out.println("Variable selected: " + variableName);
-                });
-                
-                // Important: Configure component for BoxLayout
-                groupPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                groupPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, groupPanel.getPreferredSize().height));
-                
-                groupPanels.put(group, groupPanel);
-                envVarsPanel.add(groupPanel);
-                anyGroupAdded = true;
-            }
-        }
-        
-        // Add "other" group last if it exists
-        List<EnvVariable> otherVars = groupedVariables.getOrDefault("other", Collections.emptyList());
-        if (!otherVars.isEmpty()) {
-            System.out.println("Creating panel for 'other' group with " + otherVars.size() + " variables");
-            EnvGroupPanel otherPanel = new EnvGroupPanel("other", otherVars, envService, variableName -> {
-                // Handle variable selection or action for "other" group
-                System.out.println("Variable selected from other group: " + variableName);
-            });
-            
-            // Important: Configure component for BoxLayout
-            otherPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            otherPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, otherPanel.getPreferredSize().height));
-            
-            groupPanels.put("other", otherPanel);
-            envVarsPanel.add(otherPanel);
-            anyGroupAdded = true;
-        }
-        
-        // If no variables were added, show a message
-        if (!anyGroupAdded) {
-            JLabel noVarsLabel = new JLabel("No environment variables found");
-            noVarsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            envVarsPanel.add(noVarsLabel);
-        }
-        
-        // Apply any active filter
-        if (filterField != null && !filterField.getText().isEmpty()) {
-            filterVariables();
-        }
-        
+
+        // Apply current filter
+        filterVariables();
+
+        // Fix visibility issues
         envVarsPanel.revalidate();
         envVarsPanel.repaint();
     }
-    
+
+    private void updateStatus(String s) {
+
+    }
+
     /**
      * Filter variables based on the filter text
      */
@@ -288,5 +245,64 @@ public class EnvEditorTab extends JPanel {
             }
         }
         return false;
+    }
+
+    /**
+     * Adds a new environment variable to the currently selected env file
+     */
+    public void addEnvironmentVariable(String key, String value) {
+        if (selectedEnvFile != null) {
+            EnvFileManager.setEnvVariable(project, selectedEnvFile, key, value);
+            reloadCurrentEnvFile();
+        }
+    }
+
+    /**
+     * Updates an existing environment variable in the currently selected env file
+     */
+    public void updateEnvironmentVariable(String key, String value) {
+        if (selectedEnvFile != null) {
+            EnvFileManager.setEnvVariable(project, selectedEnvFile, key, value);
+            reloadCurrentEnvFile();
+        }
+    }
+
+    /**
+     * Removes an environment variable from the currently selected env file
+     */
+    public void removeEnvironmentVariable(String key) {
+        if (selectedEnvFile != null) {
+            EnvFileManager.removeEnvVariable(project, selectedEnvFile, key);
+            reloadCurrentEnvFile();
+        }
+    }
+
+    /**
+     * Get the value of an environment variable from the currently selected env file
+     */
+    public String getEnvironmentVariableValue(String key) {
+        if (selectedEnvFile != null) {
+            return EnvFileManager.getEnvVariable(selectedEnvFile, key);
+        }
+        return null;
+    }
+
+    /**
+     * Updates multiple environment variables at once
+     */
+    public void updateMultipleEnvironmentVariables(Map<String, String> variables) {
+        if (selectedEnvFile != null) {
+            EnvFileManager.setMultipleEnvVariables(project, selectedEnvFile, variables);
+            reloadCurrentEnvFile();
+        }
+    }
+    
+    /**
+     * Reload the currently selected environment file
+     */
+    private void reloadCurrentEnvFile() {
+        if (selectedEnvFile != null) {
+            loadEnvFile(selectedEnvFile.getPath());
+        }
     }
 }
