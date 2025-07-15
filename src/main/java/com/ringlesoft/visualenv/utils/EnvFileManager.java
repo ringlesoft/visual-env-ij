@@ -50,6 +50,7 @@ public class EnvFileManager {
                 }
                 document.insertString(document.getTextLength(), newLine + "\n");
             }
+            FileDocumentManager.getInstance().saveDocument(document);
         });
     }
     
