@@ -42,6 +42,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
     private JTabbedPane tabbedPane;
     private JPanel mainPanel;
     private JPanel controlPanel;
+    private JPanel envVarsPanel; // Add field for environment variables panel
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -209,10 +210,15 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(JBUI.Borders.empty(5));
 
-        JPanel envVarsPanel = new JPanel();
+        envVarsPanel = new JPanel();
         envVarsPanel.setLayout(new BoxLayout(envVarsPanel, BoxLayout.Y_AXIS));
         
+        // Set preferred size to ensure scrolling works properly
+        envVarsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
         JScrollPane scrollPane = new JBScrollPane(envVarsPanel);
+        scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
@@ -375,45 +381,68 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         // Clear existing panels
         groupPanels.clear();
         
-        // Get the env panel to update
-        JPanel envPanel = (JPanel) ((JScrollPane) ((BorderLayout) getContentPanel()
-                .getLayout()).getLayoutComponent(BorderLayout.CENTER))
-                .getViewport().getView();
+        // Use the direct reference to the envVarsPanel
+        envVarsPanel.removeAll();
         
-        envPanel.removeAll();
+        // Debug
+        System.out.println("Updating variable groups with " + variables.size() + " variables");
         
         // Group variables by group
         Map<String, List<EnvVariable>> groupedVariables = new HashMap<>();
         
         for (EnvVariable variable : variables) {
-            groupedVariables.computeIfAbsent(variable.getGroup(), k -> new ArrayList<>())
+            String group = variable.getGroup() != null ? variable.getGroup() : "other";
+            groupedVariables.computeIfAbsent(group, k -> new ArrayList<>())
                     .add(variable);
         }
         
         // Create panels for each group
         EnvProfile profile = envService.getActiveProfile();
+        boolean anyGroupAdded = false;
+        
         for (String group : profile.getAllGroups()) {
             List<EnvVariable> groupVars = groupedVariables.getOrDefault(group, Collections.emptyList());
             if (!groupVars.isEmpty()) {
+                System.out.println("Creating panel for group: " + group + " with " + groupVars.size() + " variables");
                 EnvGroupPanel groupPanel = new EnvGroupPanel(group, groupVars, envService, variableName -> {
                     // Handle variable selection or action
                     // For example, you might want to show details or allow editing
                     System.out.println("Variable selected: " + variableName);
                 });
+                
+                // Important: Configure component for BoxLayout
+                groupPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                groupPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, groupPanel.getPreferredSize().height));
+                
                 groupPanels.put(group, groupPanel);
-                envPanel.add(groupPanel);
+                envVarsPanel.add(groupPanel);
+                anyGroupAdded = true;
             }
         }
         
         // Add "other" group last if it exists
         List<EnvVariable> otherVars = groupedVariables.getOrDefault("other", Collections.emptyList());
         if (!otherVars.isEmpty()) {
+            System.out.println("Creating panel for 'other' group with " + otherVars.size() + " variables");
             EnvGroupPanel otherPanel = new EnvGroupPanel("other", otherVars, envService, variableName -> {
                 // Handle variable selection or action for "other" group
                 System.out.println("Variable selected from other group: " + variableName);
             });
+            
+            // Important: Configure component for BoxLayout
+            otherPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            otherPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, otherPanel.getPreferredSize().height));
+            
             groupPanels.put("other", otherPanel);
-            envPanel.add(otherPanel);
+            envVarsPanel.add(otherPanel);
+            anyGroupAdded = true;
+        }
+        
+        // If no variables were added, show a message
+        if (!anyGroupAdded) {
+            JLabel noVarsLabel = new JLabel("No environment variables found");
+            noVarsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            envVarsPanel.add(noVarsLabel);
         }
         
         // Apply any active filter
@@ -421,8 +450,14 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
             filterVariables();
         }
         
-        envPanel.revalidate();
-        envPanel.repaint();
+        envVarsPanel.revalidate();
+        envVarsPanel.repaint();
+        
+        // Ensure parent containers are updated as well
+        contentPanel.revalidate();
+        contentPanel.repaint();
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     /**
