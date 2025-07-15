@@ -37,6 +37,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         this.project = project;
         this.envService = project.getService(EnvVariableService.class);
+        this.projectService = project.getService(ProjectService.class);
 
         mainPanel = new JPanel(new BorderLayout());
         controlPanel = createControlPanel();
@@ -45,7 +46,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         tabbedPane = new JBTabbedPane();
         
         // Create Environment Variables tab
-        JPanel envPanel = new EnvEditorTab(project, envService);
+        JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
         
         // Add Artisan tab if supported
@@ -123,7 +124,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         }
         
         // Create Environment Variables tab
-        JPanel envPanel = new EnvEditorTab(project, envService);
+        JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
         
         // Add CLI Commands tab if supported

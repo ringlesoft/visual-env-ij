@@ -57,34 +57,18 @@ public class CliActionsTab extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = JBUI.insets(5);
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.SOUTH;
         
         // Add command buttons based on the profile's available CLI actions
         if (profile != null) {
             addProfileCommands(commandsPanel, gbc);
         }
-        
-        // Add custom command execution
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.gridwidth = 3;
-        commandsPanel.add(new JBLabel("Custom Command:"), gbc);
-        
+
+
         gbc.gridy++;
         JTextField commandField = new JBTextField(20);
         commandsPanel.add(commandField, gbc);
-        
-        gbc.gridy++;
-        JButton executeButton = new JButton("Execute");
-        executeButton.addActionListener(e -> {
-            String command = commandField.getText().trim();
-            if (!command.isEmpty()) {
-                String result = envService.executeArtisanCommand(command);
-                displayCommandResult(result, "Command Result");
-            }
-        });
-        commandsPanel.add(executeButton, gbc);
-        
+
         return commandsPanel;
     }
 

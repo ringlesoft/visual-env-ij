@@ -10,6 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.ProjectService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
 
@@ -31,7 +32,8 @@ public class EnvEditorTab extends JPanel {
     
     private final Project project;
     private final EnvVariableService envVariableService;
-    
+    private final ProjectService projectService;
+
     private JComboBox<String> envFileSelector;
     private JTextField filterField;
     private JPanel envVarsPanel;
@@ -45,9 +47,10 @@ public class EnvEditorTab extends JPanel {
      * @param project    The current project
      * @param envVariableService The environment variable service
      */
-    public EnvEditorTab(Project project, EnvVariableService envVariableService) {
+    public EnvEditorTab(Project project, EnvVariableService envVariableService, ProjectService projectService) {
         this.project = project;
         this.envVariableService = envVariableService;
+        this.projectService = projectService;
         
         setLayout(new BorderLayout());
         
@@ -116,7 +119,7 @@ public class EnvEditorTab extends JPanel {
         filePanel.add(envFileSelector, BorderLayout.CENTER);
         
         gbc.gridx = 1;
-        gbc.weightx = 0.2;  // 2/6 of space
+        gbc.weightx = 0.1;  // 2/6 of space
         fileSelectorPanel.add(filePanel, gbc);
         
         // Refresh button taking 1/6 of space
@@ -201,6 +204,7 @@ public class EnvEditorTab extends JPanel {
         String path = fileBasenameToPath.getOrDefault(filenameOrPath, filenameOrPath);
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file != null) {
+            projectService.setActiveEnvFile(file.getPath());
             List<EnvVariable> variables = envVariableService.parseEnvFile(file);
             updateVariableGroups(variables);
         }

@@ -13,10 +13,12 @@ import java.util.Random;
  */
 @Service(Service.Level.PROJECT)
 public final class ProjectService {
+    public Project project;
     private static final Logger LOG = Logger.getInstance(ProjectService.class);
     private final Random random = new Random();
-    public String projectType;
-    public Project project;
+    private String projectType;
+    private String activeEnvFile;
+
 
     public ProjectService(Project project) {
         LOG.info(VisualEnvBundle.message("projectService", project.getName()));
@@ -32,6 +34,14 @@ public final class ProjectService {
 
     public void initialize() {
         projectType = ProjectDetector.getProjectType(project);
+    }
+
+    public String getActiveEnvFile() {
+        return activeEnvFile;
+    }
+
+    public void setActiveEnvFile(String envFile) {
+        activeEnvFile = envFile;
     }
 
     /**
