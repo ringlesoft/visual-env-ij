@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
+import com.ringlesoft.visualenv.profile.EnvProfile;
+import com.ringlesoft.visualenv.profile.ProfileManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -16,56 +18,39 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Service to detect and manage environment variables in a project.
+ * Service for managing environment variables in the project.
  */
 @Service(Service.Level.PROJECT)
 public final class EnvVariableService {
     private static final Logger LOG = Logger.getInstance(EnvVariableService.class);
-    private static final Pattern ENV_PATTERN = Pattern.compile("^\\s*([A-Za-z0-9_]+)\\s*=\\s*(.*)$");
-    private static final Set<String> COMMON_SECRET_KEYS = Set.of(
-            "PASSWORD", "SECRET", "KEY", "TOKEN", "PRIVATE", "AUTH"
-    );
-
     private final Project project;
-    private final Map<String, List<EnvVariable>> fileEnvVariables = new HashMap<>();
+    private final Map<VirtualFile, List<EnvVariable>> fileEnvVariables = new HashMap<>();
     private VirtualFile activeEnvFile;
+    private EnvProfile activeProfile;
 
+    /**
+     * Create a new EnvVariableService for a project
+     *
+     * @param project The project
+     */
     public EnvVariableService(Project project) {
         this.project = project;
-        LOG.info("EnvVariableService initialized for project: " + project.getName());
+        // Initialize the active profile based on project type
+        this.activeProfile = ProfileManager.getProfileForProject(project);
+        LOG.info("EnvVariableService initialized with profile: " + activeProfile.getProfileName());
     }
 
     /**
-     * Get all environment variables from the system.
-     * 
+     * Parse an environment file and extract variables
+     *
+     * @param file The file to parse
      * @return List of environment variables
      */
-    public List<EnvVariable> getSystemEnvVariables() {
-        List<EnvVariable> result = new ArrayList<>();
-        
-        Map<String, String> env = System.getenv();
-        for (Map.Entry<String, String> entry : env.entrySet()) {
-            boolean isSecret = isLikelySecret(entry.getKey());
-            EnvVariableDefinition definition = EnvVariableRegistry.getDefinition(entry.getKey());
-            String group = definition != null ? definition.getGroup() : "system";
-            result.add(new EnvVariable(entry.getKey(), entry.getValue(), "System", isSecret, group));
-        }
-        
-        return result;
-    }
-
-    /**
-     * Parse environment variables from a file.
-     *
-     * @param file The .env file to parse
-     * @return List of detected environment variables
-     */
     public List<EnvVariable> parseEnvFile(VirtualFile file) {
-        List<EnvVariable> result = new ArrayList<>();
+        List<EnvVariable> variables = new ArrayList<>();
         
-        if (file == null || !file.exists()) {
-            return result;
-        }
+        // Store file as active
+        activeEnvFile = file;
         
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
@@ -75,94 +60,106 @@ public final class EnvVariableService {
                     continue;
                 }
                 
-                Matcher matcher = ENV_PATTERN.matcher(line);
-                if (matcher.find()) {
-                    String name = matcher.group(1);
-                    String value = matcher.group(2);
+                // Match key=value pattern
+                Pattern pattern = Pattern.compile("^([^=]+)=(.*)$");
+                Matcher matcher = pattern.matcher(line);
+                
+                if (matcher.matches()) {
+                    String name = matcher.group(1).trim();
+                    String value = matcher.group(2).trim();
                     
                     // Remove quotes if present
-                    if (value.startsWith("\"") && value.endsWith("\"") || 
-                            value.startsWith("'") && value.endsWith("'")) {
+                    if ((value.startsWith("\"") && value.endsWith("\"")) || 
+                        (value.startsWith("'") && value.endsWith("'"))) {
                         value = value.substring(1, value.length() - 1);
                     }
                     
-                    boolean isSecret = isLikelySecret(name);
-                    EnvVariableDefinition definition = EnvVariableRegistry.getDefinition(name);
-                    String group = definition != null ? definition.getGroup() : "other";
-                    result.add(new EnvVariable(name, value, file.getName(), isSecret, group));
+                    // Check if this is a predefined variable
+                    EnvVariableDefinition definition = activeProfile.getDefinition(name);
+                    
+                    // Determine group
+                    String group = (definition != null) ? definition.getGroup() : "other";
+                    
+                    // Determine if secret
+                    boolean isSecret = (definition != null) ? definition.isSecret() : 
+                            name.toLowerCase().contains("key") || 
+                            name.toLowerCase().contains("secret") || 
+                            name.toLowerCase().contains("password") ||
+                            name.toLowerCase().contains("token");
+                    
+                    EnvVariable variable = new EnvVariable(name, value, file, group, isSecret);
+                    variables.add(variable);
                 }
             }
+            
+            // Cache variables
+            fileEnvVariables.put(file, variables);
+            
+            return variables;
         } catch (IOException e) {
-            LOG.error("Error reading env file: " + file.getPath(), e);
+            LOG.error("Failed to parse env file", e);
+            return Collections.emptyList();
         }
-        
-        // Store the results for this file
-        fileEnvVariables.put(file.getPath(), result);
-        activeEnvFile = file;
-        return result;
-    }
-
-    /**
-     * Get all known environment variables from parsed files.
-     *
-     * @return Map of filepath to list of variables
-     */
-    public Map<String, List<EnvVariable>> getAllFileEnvVariables() {
-        return Collections.unmodifiableMap(fileEnvVariables);
     }
     
     /**
-     * Updates or creates an environment variable in the active .env file.
+     * Update an environment variable in the active file
      *
-     * @param name Name of the variable
-     * @param value Value to set
+     * @param name  The name of the variable
+     * @param value The new value
      * @return true if successful
      */
     public boolean updateEnvVariable(String name, String value) {
-        if (activeEnvFile == null || !activeEnvFile.exists()) {
-            LOG.warn("No active .env file to update");
+        if (activeEnvFile == null) {
+            LOG.error("No active env file");
             return false;
         }
-
+        
         try {
+            // Read the file content
             String content = new String(activeEnvFile.contentsToByteArray(), StandardCharsets.UTF_8);
-            String[] lines = content.split("\n");
-            boolean found = false;
+            String updatedContent;
             
-            StringBuilder newContent = new StringBuilder();
+            // Check if the variable exists in the file
+            Pattern pattern = Pattern.compile("^" + Pattern.quote(name) + "=.*$", Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(content);
             
-            // Format the value with quotes if it contains spaces
-            String formattedValue = value.contains(" ") ? "\"" + value + "\"" : value;
-            
-            // Try to update existing variable
-            for (String line : lines) {
-                Matcher matcher = ENV_PATTERN.matcher(line);
-                if (matcher.find() && matcher.group(1).equals(name)) {
-                    newContent.append(name).append("=").append(formattedValue).append("\n");
-                    found = true;
-                } else {
-                    newContent.append(line).append("\n");
-                }
+            if (matcher.find()) {
+                // Update existing variable
+                updatedContent = matcher.replaceFirst(name + "=" + value);
+            } else {
+                // Add new variable
+                updatedContent = content + (content.endsWith("\n") ? "" : "\n") + name + "=" + value + "\n";
             }
             
-            // Add new variable if not found
-            if (!found) {
-                newContent.append(name).append("=").append(formattedValue).append("\n");
+            // Write the content back to the file
+            try (OutputStream outputStream = activeEnvFile.getOutputStream(this)) {
+                outputStream.write(updatedContent.getBytes(StandardCharsets.UTF_8));
             }
             
-            // Write back to file
-            activeEnvFile.setBinaryContent(newContent.toString().getBytes(StandardCharsets.UTF_8));
-            
-            // Re-parse the file to update our internal state
+            // Update cache
             parseEnvFile(activeEnvFile);
             
             return true;
         } catch (IOException e) {
-            LOG.error("Error updating env variable: " + name, e);
+            LOG.error("Failed to update env variable", e);
             return false;
         }
     }
     
+    /**
+     * Get all environment variables from all loaded files
+     *
+     * @return Map of files to their variables
+     */
+    public Map<String, List<EnvVariable>> getAllFileEnvVariables() {
+        Map<String, List<EnvVariable>> result = new HashMap<>();
+        for (Map.Entry<VirtualFile, List<EnvVariable>> entry : fileEnvVariables.entrySet()) {
+            result.put(entry.getKey().getPath(), entry.getValue());
+        }
+        return result;
+    }
+
     /**
      * Creates a .env file from a .env.example file
      *
@@ -315,25 +312,33 @@ public final class EnvVariableService {
     /**
      * Get the currently active .env file.
      *
-     * @return The active file or null if none
+     * @return The active .env file, or null if none is active
      */
     public VirtualFile getActiveEnvFile() {
         return activeEnvFile;
     }
+
+    /**
+     * Get the currently active profile
+     * 
+     * @return The active profile
+     */
+    public EnvProfile getActiveProfile() {
+        return activeProfile;
+    }
     
     /**
-     * Determine if a variable is likely to be a secret based on its name.
-     *
-     * @param name Variable name
-     * @return true if likely a secret
+     * Set the active profile
+     * 
+     * @param profile The profile to set as active
      */
-    private boolean isLikelySecret(String name) {
-        String upperName = name.toUpperCase();
-        for (String secretKey : COMMON_SECRET_KEYS) {
-            if (upperName.contains(secretKey)) {
-                return true;
-            }
+    public void setActiveProfile(EnvProfile profile) {
+        this.activeProfile = profile;
+        LOG.info("Active profile changed to: " + profile.getProfileName());
+        
+        // Re-parse active env file with new profile if there is one
+        if (activeEnvFile != null) {
+            parseEnvFile(activeEnvFile);
         }
-        return false;
     }
 }
