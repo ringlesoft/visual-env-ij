@@ -86,4 +86,6 @@ public interface EnvProfile {
      * @return List of environment file definitions
      */
     List<EnvFileDefinition> getEnvFileDefinitions();
+
+    boolean supportsTemplateFiles();
 }

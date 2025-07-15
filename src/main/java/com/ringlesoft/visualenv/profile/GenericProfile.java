@@ -111,6 +111,11 @@ public class GenericProfile implements EnvProfile {
         return definitions;
     }
 
+    @Override
+    public boolean supportsTemplateFiles() {
+        return false;
+    }
+
     /**
      * Registers a predefined environment variable in the registry.
      *

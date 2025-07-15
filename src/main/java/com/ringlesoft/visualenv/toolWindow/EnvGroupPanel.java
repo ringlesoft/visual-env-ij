@@ -244,4 +244,10 @@ public class EnvGroupPanel extends JPanel {
         // Hide the group entirely if no variables match
         setVisible(visibleCount > 0);
     }
+
+    public void applyFilter(String filterText) {
+        if(filterText.length() > 1) {
+//            filterVariables(filterText);
+        }
+    }
 }

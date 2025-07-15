@@ -448,6 +448,11 @@ public class LaravelProfile implements EnvProfile {
         return definitions;
     }
 
+    @Override
+    public boolean supportsTemplateFiles() {
+        return true;
+    }
+
     /**
      * Registers a predefined environment variable in the registry.
      *

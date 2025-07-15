@@ -38,17 +38,21 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
     private JComboBox<String> profileSelector;
     private JLabel projectTypeLabel;
     private Map<String, EnvProfile> availableProfiles;
+    private JPanel contentPanel;
+    private JTabbedPane tabbedPane;
+    private JPanel mainPanel;
+    private JPanel controlPanel;
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         this.project = project;
         this.envService = project.getService(EnvVariableService.class);
 
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        JPanel controlPanel = createControlPanel();
+        mainPanel = new JPanel(new BorderLayout());
+        controlPanel = createControlPanel();
         
-        JPanel contentPanel = new JPanel(new BorderLayout());
-        JTabbedPane tabbedPane = new JBTabbedPane();
+        contentPanel = new JPanel(new BorderLayout());
+        tabbedPane = new JBTabbedPane();
         
         // Create Environment Variables tab
         JPanel envPanel = createEnvPanel();
@@ -57,8 +61,8 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         // Only add Artisan commands tab for Laravel projects
         EnvProfile activeProfile = envService.getActiveProfile();
         if (activeProfile.supportsArtisanCommands()) {
-            JPanel artisanPanel = createArtisanPanel();
-            tabbedPane.addTab("Artisan Commands", artisanPanel);
+            JPanel artisanPanel = createCliActionsPanel();
+            tabbedPane.addTab("Cli Commands", artisanPanel);
         }
         
         contentPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -217,7 +221,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
     /**
      * Create the Artisan commands panel for Laravel projects
      */
-    private JPanel createArtisanPanel() {
+    private JPanel createCliActionsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(JBUI.Borders.empty(5));
 
@@ -372,9 +376,9 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         groupPanels.clear();
         
         // Get the env panel to update
-        JPanel envPanel = (JPanel) ((JScrollPane) ((JPanel) ((BorderLayout) project
-                .getComponent(ToolWindow.class).getComponent(0).getComponent(0).getLayout()).getLayoutComponent(BorderLayout.CENTER))
-                .getComponent(0)).getViewport().getView();
+        JPanel envPanel = (JPanel) ((JScrollPane) ((BorderLayout) getContentPanel()
+                .getLayout()).getLayoutComponent(BorderLayout.CENTER))
+                .getViewport().getView();
         
         envPanel.removeAll();
         
@@ -391,7 +395,11 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         for (String group : profile.getAllGroups()) {
             List<EnvVariable> groupVars = groupedVariables.getOrDefault(group, Collections.emptyList());
             if (!groupVars.isEmpty()) {
-                EnvGroupPanel groupPanel = new EnvGroupPanel(group, groupVars, envService);
+                EnvGroupPanel groupPanel = new EnvGroupPanel(group, groupVars, envService, variableName -> {
+                    // Handle variable selection or action
+                    // For example, you might want to show details or allow editing
+                    System.out.println("Variable selected: " + variableName);
+                });
                 groupPanels.put(group, groupPanel);
                 envPanel.add(groupPanel);
             }
@@ -400,7 +408,10 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         // Add "other" group last if it exists
         List<EnvVariable> otherVars = groupedVariables.getOrDefault("other", Collections.emptyList());
         if (!otherVars.isEmpty()) {
-            EnvGroupPanel otherPanel = new EnvGroupPanel("other", otherVars, envService);
+            EnvGroupPanel otherPanel = new EnvGroupPanel("other", otherVars, envService, variableName -> {
+                // Handle variable selection or action for "other" group
+                System.out.println("Variable selected from other group: " + variableName);
+            });
             groupPanels.put("other", otherPanel);
             envPanel.add(otherPanel);
         }
@@ -434,44 +445,27 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         projectTypeLabel.setText("Project type: " + projectType);
         
         // Update button visibility based on profile
-        Container buttonPanel = ((JPanel) ((BorderLayout) project
-                .getComponent(ToolWindow.class).getComponent(0).getComponent(0).getLayout()).getLayoutComponent(BorderLayout.NORTH))
-                .getComponent(2);
+        Container buttonPanel = controlPanel;
         
-        buttonPanel.removeAll();
-        
-        // Add create from example button if profile supports it
-        if (envService.getActiveProfile().getProfileName().equals("Laravel")) {
-            JButton createFromExampleButton = new JButton("Create from Example");
-            createFromExampleButton.addActionListener(e -> {
-                String basePath = project.getBasePath();
-                if (basePath != null) {
-                    VirtualFile exampleFile = LocalFileSystem.getInstance()
-                            .refreshAndFindFileByPath(basePath + "/.env.example");
-                    if (exampleFile != null) {
-                        boolean success = envService.createEnvFromExample(exampleFile);
-                        if (success) {
-                            loadEnvFiles(); // Refresh file list
-                        }
-                    }
+        // Find action buttons in the control panel (assuming they're in a box layout or similar)
+        for (Component component : buttonPanel.getComponents()) {
+            if (component instanceof JButton) {
+                JButton button = (JButton) component;
+                if (button.getText().equals("Create from Example")) {
+                    // Only show if profile supports template files
+                    button.setVisible(envService.getActiveProfile().supportsTemplateFiles());
                 }
-            });
-            buttonPanel.add(createFromExampleButton);
+            }
         }
         
         // Update tabs
-        JTabbedPane tabbedPane = ((JTabbedPane) ((JPanel) ((BorderLayout) project
-                .getComponent(ToolWindow.class).getComponent(0).getComponent(0).getLayout()).getLayoutComponent(BorderLayout.CENTER))
-                .getComponent(0));
-        
-        // Remove all tabs after the first one
         while (tabbedPane.getTabCount() > 1) {
             tabbedPane.remove(1);
         }
         
         // Add Artisan tab if supported
         if (envService.getActiveProfile().supportsArtisanCommands()) {
-            JPanel artisanPanel = createArtisanPanel();
+            JPanel artisanPanel = createCliActionsPanel();
             tabbedPane.addTab("Artisan Commands", artisanPanel);
         }
         
@@ -479,8 +473,12 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         loadEnvFiles();
         
         // Refresh UI
-        project.getComponent(ToolWindow.class).getComponent(0).revalidate();
-        project.getComponent(ToolWindow.class).getComponent(0).repaint();
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+    
+    private JPanel getContentPanel() {
+        return contentPanel;
     }
     
     @Override
