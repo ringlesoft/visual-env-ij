@@ -244,45 +244,70 @@ public class EnvGroupPanel extends JPanel {
     }
     
     /**
-     * Filter variables based on search text
-     * @param filterText The text to filter by
+     * Apply filtering to show only variables matching the filter
      */
-    private void filterVariables(String filterText) {
-        if (filterText == null || filterText.isEmpty()) {
-            // Show all variables
-            for (Component panel : variableComponents.values()) {
-                panel.setVisible(true);
-            }
-            return;
-        }
+    public void applyFilter(String filterText) {
+        this.currentFilter = filterText;
+        updateVariablesPanel();
+    }
+
+    /**
+     * Updates the variables panel based on the current filter
+     */
+    private void updateVariablesPanel() {
+        variablesPanel.removeAll();
+        int visibleCount = 0;
         
-        String lowerFilterText = filterText.toLowerCase();
-        boolean hasVisibleComponents = false;
-        
-        // Filter each variable component
-        for (EnvVariable variable : variables) {
-            String name = variable.getName().toLowerCase();
-            String value = variable.getValue().toLowerCase();
-            JPanel panel = (JPanel) variableComponents.get(variable.getName());
+        for (int i = 0; i < variables.size(); i++) {
+            EnvVariable variable = variables.get(i);
             
-            if (panel != null) {
-                boolean visible = name.contains(lowerFilterText) || value.contains(lowerFilterText);
-                panel.setVisible(visible);
-                if (visible) {
-                    hasVisibleComponents = true;
+            boolean shouldShow = currentFilter == null || currentFilter.isEmpty() ||
+                    variable.getName().toLowerCase().contains(currentFilter) ||
+                    variable.getValue().toLowerCase().contains(currentFilter) ;
+            
+            if (shouldShow) {
+                JPanel varPanel = createControlForVariable(variable);
+                variablesPanel.add(varPanel);
+                visibleCount++;
+                
+                // Add a separator between variables
+                if (visibleCount < countVisibleVariables()) {
+                    variablesPanel.add(Box.createRigidArea(new Dimension(0, 1)));
                 }
             }
         }
         
-        // Update panel visibility based on whether any variables are visible
-        setVisible(hasVisibleComponents);
+        // Update visibility based on expanded state and if there are visible variables
+        updatePanelVisibility(visibleCount > 0);
+        
+        // Update the maximum size based on preferred size after content changes
+        updateMaximumSize();
+        
+        // Refresh the UI
+        variablesPanel.revalidate();
+        variablesPanel.repaint();
     }
-
-    public void applyFilter(String filterText) {
-        currentFilter = filterText;
-        if(filterText.length() > 1) {
-            filterVariables(filterText);
+    
+    /**
+     * Updates the maximum size based on current content
+     */
+    private void updateMaximumSize() {
+        revalidate();
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+    }
+    
+    /**
+     * Count how many variables would be visible with current filter
+     */
+    private int countVisibleVariables() {
+        if (currentFilter == null || currentFilter.isEmpty()) {
+            return variables.size();
         }
+        
+        return (int) variables.stream()
+            .filter(v -> v.getName().toLowerCase().contains(currentFilter) ||
+                    v.getValue().toLowerCase().contains(currentFilter))
+            .count();
     }
     
     /**
@@ -359,5 +384,10 @@ public class EnvGroupPanel extends JPanel {
         
         // Store the timer
         debounceTimers.put(variableName, timer);
+    }
+    
+    private void updatePanelVisibility(boolean visible) {
+        variablesPanel.setVisible(visible && expanded);
+        setVisible(visible && expanded);
     }
 }

@@ -5,11 +5,17 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
+import com.ringlesoft.visualenv.model.CliActionDefinition;
+import com.ringlesoft.visualenv.model.CliParameterDefinition;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvVariableService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Panel for CLI command execution in the Visual Env tool window
@@ -53,9 +59,9 @@ public class CliActionsTab extends JPanel {
         gbc.insets = JBUI.insets(5);
         gbc.anchor = GridBagConstraints.WEST;
         
-        // Add command buttons based on the profile
-        if (profile.supportsArtisanCommands()) {
-            addArtisanCommands(commandsPanel, gbc);
+        // Add command buttons based on the profile's available CLI actions
+        if (profile != null) {
+            addProfileCommands(commandsPanel, gbc);
         }
         
         // Add custom command execution
@@ -83,66 +89,127 @@ public class CliActionsTab extends JPanel {
     }
 
     /**
-     * Add Artisan command buttons for Laravel projects
+     * Add command buttons from the profile's available CLI actions
      *
      * @param panel The panel to add buttons to
      * @param gbc   The grid bag constraints
      */
-    private void addArtisanCommands(JPanel panel, GridBagConstraints gbc) {
-        String[] commands = {
-                "key:generate",
-                "migrate",
-                "cache:clear",
-                "route:list",
-                "make:controller",
-                "make:model"
-        };
+    private void addProfileCommands(JPanel panel, GridBagConstraints gbc) {
+        // Get CLI actions from the profile
+        List<CliActionDefinition> actions = profile.getAvailableCliActions();
         
-        for (String command : commands) {
-            JButton button = new JButton(command);
-            button.addActionListener(e -> {
-                // Execute the Artisan command
-                String result;
-                
-                // For make:controller and make:model, we need to prompt for a name
-                if (command.equals("make:controller") || command.equals("make:model")) {
-                    String name = promptForName(command);
-                    if (name == null || name.trim().isEmpty()) {
-                        return;
-                    }
-                    
-                    result = envService.executeArtisanCommand(command + " " + name);
-                } else {
-                    result = envService.executeArtisanCommand(command);
-                }
-                
-                displayCommandResult(result, "Artisan Command Result");
-            });
-            
-            panel.add(button, gbc);
-            gbc.gridx++;
-            
-            if (gbc.gridx > 2) {
-                gbc.gridx = 0;
-                gbc.gridy++;
+        if (actions.isEmpty()) {
+            // If no actions available, show a message
+            panel.add(new JBLabel("No CLI commands available for this profile"), gbc);
+            return;
+        }
+        
+        // Group actions by category if available
+        Map<String, List<CliActionDefinition>> categorizedActions = new HashMap<>();
+        
+        for (CliActionDefinition action : actions) {
+            String category = action.getCategory();
+            if (category == null || category.isEmpty()) {
+                category = "General";
             }
+            
+            if (!categorizedActions.containsKey(category)) {
+                categorizedActions.put(category, new ArrayList<>());
+            }
+            categorizedActions.get(category).add(action);
+        }
+        
+        // Add actions by category
+        for (Map.Entry<String, List<CliActionDefinition>> entry : categorizedActions.entrySet()) {
+            String category = entry.getKey();
+            List<CliActionDefinition> categoryActions = entry.getValue();
+            
+            // Add category header
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.gridwidth = 3;
+            JBLabel categoryLabel = new JBLabel(category);
+            categoryLabel.setFont(categoryLabel.getFont().deriveFont(Font.BOLD));
+            panel.add(categoryLabel, gbc);
+            
+            // Reset for buttons
+            gbc.gridwidth = 1;
+            gbc.gridy++;
+            gbc.gridx = 0;
+            
+            // Add buttons for this category
+            for (CliActionDefinition action : categoryActions) {
+                JButton button = new JButton(action.getName());
+                button.setToolTipText(action.getDescription());
+                
+                button.addActionListener(e -> {
+                    executeCliAction(action);
+                });
+                
+                panel.add(button, gbc);
+                gbc.gridx++;
+                
+                if (gbc.gridx > 2) {
+                    gbc.gridx = 0;
+                    gbc.gridy++;
+                }
+            }
+            
+            // Add spacing after category
+            gbc.gridx = 0;
+            gbc.gridy++;
         }
     }
-
+    
     /**
-     * Prompt the user for a name input (for controllers, models, etc.)
+     * Execute a CLI action with parameters if required
      *
-     * @param command The command being executed
-     * @return The user's input or null if cancelled
+     * @param action The CLI action to execute
      */
-    private String promptForName(String command) {
-        String type = command.equals("make:controller") ? "controller" : "model";
-        String title = "Create " + (command.equals("make:controller") ? "Controller" : "Model");
+    private void executeCliAction(CliActionDefinition action) {
+        String command = action.getCommand();
+        String result;
         
+        // Handle actions that require user input
+        if (action.isRequiresUserInput()) {
+            // Get parameters
+            List<CliParameterDefinition> parameters = action.getParameters();
+            if (parameters != null && !parameters.isEmpty()) {
+                Map<String, String> paramValues = new HashMap<>();
+                
+                // Collect parameter values
+                for (CliParameterDefinition param : parameters) {
+                    String value = promptForParameter(param);
+                    if (value == null) {
+                        // User cancelled
+                        return;
+                    }
+                    paramValues.put(param.getName(), value);
+                }
+                
+                // Replace parameters in command
+                for (Map.Entry<String, String> entry : paramValues.entrySet()) {
+                    command = command.replace("${" + entry.getKey() + "}", entry.getValue());
+                }
+            }
+        }
+        
+        // Execute the command
+        result = envService.executeArtisanCommand(command);
+        displayCommandResult(result, action.getName() + " Result");
+    }
+    
+    /**
+     * Prompt for a parameter value
+     *
+     * @param param The parameter definition
+     * @return The user input or null if cancelled
+     */
+    private String promptForParameter(CliParameterDefinition param) {
         return JOptionPane.showInputDialog(
                 this,
-                "Enter the name for the " + type + ":",
-                title,
+                "Enter value for " + param.getName() + ":",
+                "Parameter Input",
                 JOptionPane.QUESTION_MESSAGE
         );
     }
