@@ -37,6 +37,7 @@ public class EnvEditorTab extends JPanel {
     private JPanel envVarsPanel;
     private final Map<String, EnvGroupPanel> groupPanels = new HashMap<>();
     private VirtualFile selectedEnvFile;
+    private final Map<String, String> fileBasenameToPath = new HashMap<>();
 
     /**
      * Create a new Environment editor tab
@@ -147,6 +148,7 @@ public class EnvEditorTab extends JPanel {
         if (!baseDir.exists() || !baseDir.isDirectory()) return;
         
         envFileSelector.removeAllItems();
+        fileBasenameToPath.clear();
         
         // Get common env filenames from the active profile
         String[] commonEnvFiles = envVariableService.getActiveProfile().getCommonEnvFiles();
@@ -156,7 +158,10 @@ public class EnvEditorTab extends JPanel {
         for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
             File envFile = new File(baseDir, envFileDefinition.getName());
             if (envFile.exists() && envFile.isFile()) {
-                envFileSelector.addItem(envFile.getAbsolutePath());
+                String absolutePath = envFile.getAbsolutePath();
+                String basename = envFile.getName();
+                fileBasenameToPath.put(basename, absolutePath);
+                envFileSelector.addItem(basename);
             }
         }
         
@@ -169,7 +174,8 @@ public class EnvEditorTab extends JPanel {
     /**
      * Load a specific .env file
      */
-    private void loadEnvFile(String path) {
+    private void loadEnvFile(String filenameOrPath) {
+        String path = fileBasenameToPath.getOrDefault(filenameOrPath, filenameOrPath);
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file != null) {
             List<EnvVariable> variables = envVariableService.parseEnvFile(file);
@@ -227,7 +233,11 @@ public class EnvEditorTab extends JPanel {
      * @return The selected file path or null if none selected
      */
     public String getSelectedFilePath() {
-        return (String) envFileSelector.getSelectedItem();
+        String selected = (String) envFileSelector.getSelectedItem();
+        if (selected != null) {
+            return fileBasenameToPath.getOrDefault(selected, selected);
+        }
+        return null;
     }
     
     /**
@@ -237,6 +247,19 @@ public class EnvEditorTab extends JPanel {
      * @return true if the file was found and selected, false otherwise
      */
     public boolean selectEnvFile(String filePath) {
+        // First check if the full path matches any stored path
+        for (Map.Entry<String, String> entry : fileBasenameToPath.entrySet()) {
+            if (entry.getValue().equals(filePath)) {
+                for (int i = 0; i < envFileSelector.getItemCount(); i++) {
+                    if (envFileSelector.getItemAt(i).equals(entry.getKey())) {
+                        envFileSelector.setSelectedIndex(i);
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Then try matching by item directly (for backward compatibility)
         for (int i = 0; i < envFileSelector.getItemCount(); i++) {
             String item = envFileSelector.getItemAt(i);
             if (item.equals(filePath)) {

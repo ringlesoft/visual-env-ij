@@ -35,6 +35,11 @@ public class EnvGroupPanel extends JPanel {
     private boolean expanded = true;
     private EnvEditorTab parentTab;
     private String currentFilter;
+    private JScrollPane scrollPane;
+    
+    // Debounce related fields
+    private final Map<String, Timer> debounceTimers = new HashMap<>();
+    private static final int DEBOUNCE_DELAY = 500; // milliseconds
 
     public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvVariableService envVariableService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
         this.groupName = groupName;
