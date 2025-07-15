@@ -67,7 +67,7 @@ public class CliActionsTab extends JPanel {
         resultArea.setEditable(false);
         resultArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         resultArea.setBackground(UIManager.getColor("TextField.background"));
-        resultArea.setText("Command results will be displayed here.\nSelect a command from above to execute it.");
+        resultArea.setText("Visual Env");
         
         // Add the result area in a scroll pane to the center of the panel
         JScrollPane resultScrollPane = new JBScrollPane(resultArea);

@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.ProjectActivity;
@@ -34,18 +35,25 @@ public class ProjectStartupActivity implements ProjectActivity {
     @Nullable
     @Override
     public Object execute(@NotNull Project project, @NotNull Continuation<? super Unit> continuation) {
-        try {
-            initializeProject(project);
-            checkAndProcessEnvFiles(project);
-        } catch (Exception e) {
-            LOG.error("Error in ProjectStartupActivity", e);
-        }
+        // Perform initialization in a later invocation when components are loaded
+        ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+                LOG.info("Initializing Visual Env for project: " + project.getName());
+                initializeProject(project);
+                checkAndProcessEnvFiles(project);
+            } catch (Exception e) {
+                LOG.error("Error in Visual Env initialization", e);
+            }
+        });
+        
         return Unit.INSTANCE;
     }
 
     private void initializeProject(@NotNull Project project) {
         ProjectService projectService = project.getService(ProjectService.class);
-        projectService.initialize();
+        if (projectService != null) {  // Add null check to be extra safe
+            projectService.initialize();
+        }
     }
 
     /**
@@ -70,9 +78,11 @@ public class ProjectStartupActivity implements ProjectActivity {
                 showCreateEnvFileNotification(project, envExampleFile);
             }
         } else {
-            // Parse existing .env file
+            // Parse existing .env file but do it safely
             EnvVariableService envVariableService = project.getService(EnvVariableService.class);
-            envVariableService.parseEnvFile(envFile);
+            if (envVariableService != null) {  // Add null check
+                envVariableService.parseEnvFile(envFile);
+            }
         }
     }
 
@@ -135,7 +145,9 @@ public class ProjectStartupActivity implements ProjectActivity {
             
             // Parse the newly created .env file
             EnvVariableService envVariableService = project.getService(EnvVariableService.class);
-            envVariableService.parseEnvFile(envFile);
+            if (envVariableService != null) {  // Add null check
+                envVariableService.parseEnvFile(envFile);
+            }
             
             // Show success notification
             Notifications.Bus.notify(new Notification(

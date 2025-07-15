@@ -19,9 +19,8 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.ringlesoft.visualenv.toolWindow.VisualEnvToolWindowFactory" id="VisualEnv" 
-                    anchor="right" secondary="true" icon="AllIcons.General.Settings"/>
+                    anchor="right" secondary="true" icon="AllIcons.General.Gear"/>
         <postStartupActivity implementation="com.ringlesoft.visualenv.startup.ProjectStartupActivity" />
-        <projectService serviceImplementation="com.ringlesoft.visualenv.services.EnvVariableService"/>
         <notificationGroup id="Visual Env Notification Group" displayType="BALLOON" />
     </extensions>
 </idea-plugin>
