@@ -148,14 +148,14 @@ public class EnvEditorTab extends JPanel {
         envVarsPanel = new JPanel();
         envVarsPanel.setLayout(new BoxLayout(envVarsPanel, BoxLayout.Y_AXIS));
         
-        // Set preferred size to ensure scrolling works properly
-        envVarsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // Add a glue component that will push everything to the top and take extra vertical space
+        panel.add(envVarsPanel);
+        panel.add(Box.createVerticalGlue());
         
-        JScrollPane scrollPane = new JBScrollPane(envVarsPanel);
+        JScrollPane scrollPane = new JBScrollPane(panel);
         scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        panel.add(scrollPane, BorderLayout.CENTER);
-
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
         return panel;
     }
     

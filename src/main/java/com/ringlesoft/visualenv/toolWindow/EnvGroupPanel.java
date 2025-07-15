@@ -1,6 +1,5 @@
 package com.ringlesoft.visualenv.toolWindow;
 
-import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
@@ -8,6 +7,8 @@ import com.ringlesoft.visualenv.services.EnvVariableService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
@@ -19,8 +20,7 @@ import java.util.function.Consumer;
  * Panel that displays environment variables grouped by category
  */
 public class EnvGroupPanel extends JPanel {
-    
-    private final String groupName;
+
     private List<EnvVariable> variables;
     private final EnvVariableService envVariableService;
     private final Consumer<String> statusUpdater;
@@ -28,7 +28,6 @@ public class EnvGroupPanel extends JPanel {
     private final JPanel variablesPanel;
     private final JLabel titleLabel;
     private boolean expanded = true;
-    private EnvEditorTab parentTab;
     private String currentFilter;
     
     // Debounce related fields
@@ -36,12 +35,10 @@ public class EnvGroupPanel extends JPanel {
     private static final int DEBOUNCE_DELAY = 500; // milliseconds
 
     public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvVariableService envVariableService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
-        this.groupName = groupName;
         this.variables = variables;
         this.envVariableService = envVariableService;
         this.statusUpdater = statusUpdater;
-        this.parentTab = parentTab;
-        
+
         // Setup panel
         setLayout(new BorderLayout());
         setBorder(VisualEnvTheme.PANEL_BORDER);
@@ -145,7 +142,16 @@ public class EnvGroupPanel extends JPanel {
             textField = new JTextField(variable.getValue());
         }
         
+        // Set preferred size to maintain consistent height
+        Dimension preferredSize = textField.getPreferredSize();
+        preferredSize.height = 28;  // Fixed height for text fields
+        textField.setPreferredSize(preferredSize);
+        textField.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredSize.height));
+        
         textField.addActionListener(e -> updateVariable(variable.getName(), textField.getText()));
+        
+        // Add document listener for debounced saving
+        addDebounceListener(textField, variable.getName());
         
         return textField;
     }
@@ -156,6 +162,11 @@ public class EnvGroupPanel extends JPanel {
                              "1".equals(variable.getValue()) || 
                              "yes".equalsIgnoreCase(variable.getValue()));
         
+        // Set preferred size to maintain consistent height
+        Dimension preferredSize = checkBox.getPreferredSize();
+        checkBox.setPreferredSize(preferredSize);
+        checkBox.setMaximumSize(preferredSize);
+        
         checkBox.addItemListener(e -> {
             boolean isSelected = e.getStateChange() == ItemEvent.SELECTED;
             updateVariable(variable.getName(), isSelected ? "true" : "false");
@@ -164,20 +175,26 @@ public class EnvGroupPanel extends JPanel {
         return checkBox;
     }
     
-    private Component createDropdownControl(EnvVariable variable, List<String> options) {
+    private Component createDropdownControl(EnvVariable variable, List<String> possibleValues) {
         JComboBox<String> comboBox = new JComboBox<>();
-        for (String option : options) {
-            comboBox.addItem(option);
+        
+        for (String value : possibleValues) {
+            comboBox.addItem(value);
         }
         
-        // Set selected item if it exists
-        if (options.contains(variable.getValue())) {
-            comboBox.setSelectedItem(variable.getValue());
-        }
+        // Set current value
+        comboBox.setSelectedItem(variable.getValue());
+        
+        // Set preferred size to maintain consistent height
+        Dimension preferredSize = comboBox.getPreferredSize();
+        preferredSize.height = 28;  // Fixed height for dropdown
+        comboBox.setPreferredSize(preferredSize);
+        comboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredSize.height));
         
         comboBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                updateVariable(variable.getName(), (String) comboBox.getSelectedItem());
+                String selectedValue = (String) comboBox.getSelectedItem();
+                updateVariable(variable.getName(), selectedValue);
             }
         });
         
@@ -185,19 +202,22 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private Component createIntegerControl(EnvVariable variable) {
-        try {
-            int value = Integer.parseInt(variable.getValue());
-            JSpinner spinner = new JSpinner(new SpinnerNumberModel(value, Integer.MIN_VALUE, Integer.MAX_VALUE, 1));
-            
-            spinner.addChangeListener(e -> {
-                updateVariable(variable.getName(), spinner.getValue().toString());
-            });
-            
-            return spinner;
-        } catch (NumberFormatException e) {
-            // If not a valid number, fall back to text control
-            return createTextControl(variable, false);
-        }
+        JSpinner spinner = new JSpinner(new SpinnerNumberModel(
+                Integer.parseInt(variable.getValue().isEmpty() ? "0" : variable.getValue()),
+                Integer.MIN_VALUE,
+                Integer.MAX_VALUE,
+                1
+        ));
+        
+        // Set preferred size to maintain consistent height
+        Dimension preferredSize = spinner.getPreferredSize();
+        preferredSize.height = 28;  // Fixed height for spinner
+        spinner.setPreferredSize(preferredSize);
+        spinner.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredSize.height));
+        
+        spinner.addChangeListener(e -> updateVariable(variable.getName(), spinner.getValue().toString()));
+        
+        return spinner;
     }
     
     private String getDescriptionForVariable(EnvVariable variable) {
@@ -284,5 +304,56 @@ public class EnvGroupPanel extends JPanel {
         
         variablesPanel.revalidate();
         variablesPanel.repaint();
+    }
+    
+    /**
+     * Adds a debounced document listener to text fields
+     * This ensures that changes are saved after the user stops typing, rather than on every keystroke
+     * 
+     * @param textField The text field to monitor
+     * @param variableName The name of the variable to update
+     */
+    private void addDebounceListener(JTextField textField, String variableName) {
+        textField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                debounceUpdate(variableName, textField.getText());
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                debounceUpdate(variableName, textField.getText());
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                debounceUpdate(variableName, textField.getText());
+            }
+        });
+    }
+    
+    /**
+     * Handles the debounced update for a variable value
+     * Cancels any existing timer and creates a new one
+     * 
+     * @param variableName The name of the variable to update
+     * @param value The new value to set
+     */
+    private void debounceUpdate(String variableName, String value) {
+        // Cancel any existing timer for this variable
+        Timer existingTimer = debounceTimers.get(variableName);
+        if (existingTimer != null) {
+            existingTimer.stop();
+        }
+        
+        // Create a new timer
+        Timer timer = new Timer(DEBOUNCE_DELAY, e -> {
+            updateVariable(variableName, value);
+        });
+        timer.setRepeats(false);
+        timer.start();
+        
+        // Store the timer
+        debounceTimers.put(variableName, timer);
     }
 }
