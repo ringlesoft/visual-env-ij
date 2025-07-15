@@ -93,7 +93,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
      * Create the CLI commands panel for the active profile
      */
     private JPanel createCliActionsPanel() {
-        return new CliActionsTab(project, envService);
+        return new CliActionsTab( envService, envService.getActiveProfile());
     }
 
     /**

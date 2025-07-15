@@ -1,6 +1,5 @@
 package com.ringlesoft.visualenv.toolWindow;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
@@ -12,63 +11,69 @@ import com.ringlesoft.visualenv.services.EnvVariableService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Panel for CLI command execution in the Visual Env tool window
+ * Tab for executing CLI commands
  */
 public class CliActionsTab extends JPanel {
     
-    private final Project project;
     private final EnvVariableService envService;
     private final EnvProfile profile;
-
+    private JTextArea resultArea; // Added field for displaying results
+    
     /**
-     * Create a new CLI actions panel
+     * Create a new Artisan tab
      *
-     * @param project    The current project
      * @param envService The environment variable service
+     * @param profile The active environment profile
      */
-    public CliActionsTab(Project project, EnvVariableService envService) {
-        this.project = project;
+    public CliActionsTab(EnvVariableService envService, EnvProfile profile) {
         this.envService = envService;
-        this.profile = envService.getActiveProfile();
+        this.profile = profile;
         
         setLayout(new BorderLayout());
-        setBorder(JBUI.Borders.empty(5));
         
+        // Create the commands panel
         JPanel commandsPanel = createCommandsPanel();
-        add(new JBScrollPane(commandsPanel), BorderLayout.CENTER);
+        
+        // Add the panel to the tab
+        add(commandsPanel, BorderLayout.CENTER);
     }
-
+    
     /**
      * Create the panel with CLI command buttons
      *
      * @return The panel with CLI commands
      */
     private JPanel createCommandsPanel() {
-        JPanel commandsPanel = new JPanel();
-        commandsPanel.setLayout(new GridBagLayout());
+        // Use a panel with BorderLayout for overall structure
+        JPanel commandsPanel = new JPanel(new BorderLayout());
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = JBUI.insets(5);
-        gbc.anchor = GridBagConstraints.SOUTH;
+        // Create a panel with FlowLayout for horizontal button arrangement
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         
         // Add command buttons based on the profile's available CLI actions
         if (profile != null) {
-            addProfileCommands(commandsPanel, gbc);
+            addProfileCommands(buttonsPanel);
         }
-
-
-        gbc.gridy++;
-        JTextField commandField = new JBTextField(20);
-        commandsPanel.add(commandField, gbc);
-
+        
+        // Add the buttons panel to the top of the main panel
+        commandsPanel.add(buttonsPanel, BorderLayout.NORTH);
+        
+        // Create the result area for command output
+        resultArea = new JTextArea(20, 80);
+        resultArea.setEditable(false);
+        resultArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        resultArea.setBackground(UIManager.getColor("TextField.background"));
+        resultArea.setText("Command results will be displayed here.\nSelect a command from above to execute it.");
+        
+        // Add the result area in a scroll pane to the center of the panel
+        JScrollPane resultScrollPane = new JBScrollPane(resultArea);
+        resultScrollPane.setBorder(BorderFactory.createTitledBorder("Command Results"));
+        commandsPanel.add(resultScrollPane, BorderLayout.CENTER);
+        
         return commandsPanel;
     }
 
@@ -76,15 +81,14 @@ public class CliActionsTab extends JPanel {
      * Add command buttons from the profile's available CLI actions
      *
      * @param panel The panel to add buttons to
-     * @param gbc   The grid bag constraints
      */
-    private void addProfileCommands(JPanel panel, GridBagConstraints gbc) {
+    private void addProfileCommands(JPanel panel) {
         // Get CLI actions from the profile
         List<CliActionDefinition> actions = profile.getAvailableCliActions();
         
         if (actions.isEmpty()) {
             // If no actions available, show a message
-            panel.add(new JBLabel("No CLI commands available for this profile"), gbc);
+            panel.add(new JBLabel("No CLI commands available for this profile"));
             return;
         }
         
@@ -108,18 +112,18 @@ public class CliActionsTab extends JPanel {
             String category = entry.getKey();
             List<CliActionDefinition> categoryActions = entry.getValue();
             
-            // Add category header
-            gbc.gridx = 0;
-            gbc.gridy++;
-            gbc.gridwidth = 3;
+            // Add category header with a custom panel for each category
+            JPanel categoryPanel = new JPanel();
+            categoryPanel.setLayout(new BoxLayout(categoryPanel, BoxLayout.Y_AXIS));
+            
             JBLabel categoryLabel = new JBLabel(category);
             categoryLabel.setFont(categoryLabel.getFont().deriveFont(Font.BOLD));
-            panel.add(categoryLabel, gbc);
+            categoryLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            categoryPanel.add(categoryLabel);
             
-            // Reset for buttons
-            gbc.gridwidth = 1;
-            gbc.gridy++;
-            gbc.gridx = 0;
+            // Create a flow panel for buttons in this category
+            JPanel buttonFlowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+            buttonFlowPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
             
             // Add buttons for this category
             for (CliActionDefinition action : categoryActions) {
@@ -130,31 +134,23 @@ public class CliActionsTab extends JPanel {
                     executeCliAction(action);
                 });
                 
-                panel.add(button, gbc);
-                gbc.gridx++;
-                
-                if (gbc.gridx > 2) {
-                    gbc.gridx = 0;
-                    gbc.gridy++;
-                }
+                buttonFlowPanel.add(button);
             }
             
-            // Add spacing after category
-            gbc.gridx = 0;
-            gbc.gridy++;
+            categoryPanel.add(buttonFlowPanel);
+            panel.add(categoryPanel);
         }
     }
     
     /**
      * Execute a CLI action with parameters if required
      *
-     * @param action The CLI action to execute
+     * @param action The action to execute
      */
     private void executeCliAction(CliActionDefinition action) {
         String command = action.getCommand();
-        String result;
+        String result = "";
         
-        // Handle actions that require user input
         if (action.isRequiresUserInput()) {
             // Get parameters
             List<CliParameterDefinition> parameters = action.getParameters();
@@ -202,19 +198,11 @@ public class CliActionsTab extends JPanel {
      * Display the result of a command execution
      *
      * @param result The command result text
-     * @param title  The title for the result dialog
+     * @param title  The title for the result section
      */
     private void displayCommandResult(String result, String title) {
-        JTextArea textArea = new JTextArea(result);
-        textArea.setEditable(false);
-        JScrollPane scrollPane = new JBScrollPane(textArea);
-        scrollPane.setPreferredSize(new Dimension(600, 400));
-        
-        JOptionPane.showMessageDialog(
-                this,
-                scrollPane,
-                title,
-                JOptionPane.INFORMATION_MESSAGE
-        );
+        // Update the result area with the new content and title
+        resultArea.setText(result);
+        resultArea.setCaretPosition(0); // Scroll to the top
     }
 }
