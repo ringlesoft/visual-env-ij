@@ -1,98 +1,99 @@
 # Visual Env
 
-A IntelliJ-based IDE plugin for visualizing environment variables within your projects.
+![Build](https://img.shields.io/github/workflow/status/ringlesoft/visual-env-ij/Build)
+![Version](https://img.shields.io/jetbrains/plugin/v/com.ringlesoft.visualenv)
+![Downloads](https://img.shields.io/jetbrains/plugin/d/com.ringlesoft.visualenv)
+![Rating](https://img.shields.io/jetbrains/plugin/r/rating/com.ringlesoft.visualenv)
 
 <!-- Plugin description -->
 **Visual Env** is an IntelliJ plugin that helps developers visualize and manage environment variables within their projects. 
-This plugin makes it easy to see which environment variables are in use, what their values are, and how they affect your application.
+This plugin makes it easy to see which environment variables are in use, edit their values through a user-friendly interface, and run environment-related CLI commands directly from your IDE.
 <!-- Plugin description end -->
 
-## Introduction
-Visual Env is a plugin for IntelliJ Platform that allows you to easily manage your `.env` files in your Laravel Project.
-It Provides a user interface to interact with your `.env` file.
-
 ## Features
-- Create a copy of `.env.example` file and rename it to `.env` when you create a new project.
-- Use UI to change the values of common environment variables in your `.env` file.
-- Use UI to add new environment variables to your `.env` file.
-- Run php artisan commands that interact with the environment variables in your `.env` file.
 
+### Environment Variable Management
+- View and edit environment variables in a structured, user-friendly interface
+- Group variables by category for better organization
+- Support for various data types (string, boolean, number) with appropriate input controls
+- Filter and search capabilities to quickly find specific variables
 
-## How It Should Work
-- When the plugin starts, it should find a file named `.env` in the project root.
-- If the file is not found, it should find a file named `.env.example` in the project root and create a copy of `.env.example` and rename it to `.env`. It may asc for permission from the user.
-- If the file `.env.example` is not found, it should show a message to the user that the file is not found.
-- The plugin should parse the content of the `.env` file to get the environment variables.
-- The plugin should maintain a list of pre-defined environment variables that has a finite list of possible values.
-- The plugin should show a list of Dropdown input fields for the predefined environment variables that has multiple possible values.
-- The plugin should show a beautiful toggle switch for the boolean environment variables.
-- The plugin should show a text input field for the string environment variables.
-- The Plugin should show accordion style groupings for environment variables that belongs to the same group.
-- There should be an option to hide or show the variables that are not in the predefined list.
-- The plugin should maintain a list of profiles (starting with laravel) to which environment variable registry belongs.
+### Framework-Specific Support
+- **Laravel Projects**: Automatic detection of Laravel projects
+- Create `.env` files from `.env.example` templates with a single click
+- Run artisan commands related to environment configuration
+- Predefined variable definitions for common Laravel environment variables
 
+### CLI Command Integration
+- Execute environment-related CLI commands directly from the IDE
+- Framework-specific command suggestions based on project type
+- Command history and output display
+- Parameter support with validation
 
-## Artisan Commands
-- `php artisan key:generate` - Generate a new encryption key for your application.
+## Installation
 
+### From JetBrains Marketplace
+- Open your IDE settings (File | Settings | Plugins)
+- Search for "Visual Env"
+- Click "Install" and restart your IDE
 
-## ENV Variable Management
-For now this plugin supports only Laravel Projects. In the future it will support other frameworks.
+### Manual Installation
+1. Download the latest release from the [releases page](https://github.com/ringlesoft/visual-env-ij/releases)
+2. Open your IDE settings (File | Settings | Plugins)
+3. Click the gear icon and select "Install Plugin from Disk..."
+4. Select the downloaded file and restart your IDE
 
-###  Variable Definition
-Laravel Common .env Environment Variables
-| Environment Variable       | Description                                                     | Possible Values / Notes                  | Data Type   | Group       |
-|---------------------------|-----------------------------------------------------------------|----------------------------------------|-------------|-------------|
-| **APP_NAME**              | The name of your application.                                   | Any string, e.g., `"Laravel"`, `"My App"` | string      | app         |
-| **APP_ENV**               | The application environment.                                    | `local`, `production`, `staging`, `testing`, *user specified* | string      | app         |
-| **APP_KEY**               | Application encryption key used for encryption and sessions.  | Base64-encoded string (generated by `php artisan key:generate`) | string      | app         |
-| **APP_DEBUG**             | Enables debug mode for detailed error messages.                | `true`, `false`                        | boolean     | app         |
-| **APP_URL**               | The URL of your application.                                   | Full URL string, e.g. `http://localhost` or `https://example.com` | string      | app         |
-| **LOG_CHANNEL**           | Specifies the default logging channel.                         | `stack`, `single`, `daily`, `slack`, etc. | string      | logging     |
-| **LOG_LEVEL**             | Minimum log level to record.                                   | `debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert`, `emergency` | string      | logging     |
-| **DB_CONNECTION**         | Database connection driver.                                    | `mysql`, `pgsql`, `sqlite`, `sqlsrv`  | string      | database    |
-| **DB_HOST**               | Database server host.                                          | IP or hostname, e.g., `127.0.0.1` or `localhost` | string      | database    |
-| **DB_PORT**               | Database server port.                                          | Default ports like `3306` for MySQL, `5432` for PostgreSQL, *user specified* | integer     | database    |
-| **DB_DATABASE**           | Name of the database.                                         | *user specified*                      | string      | database    |
-| **DB_USERNAME**           | Database username.                                            | *user specified*                      | string      | database    |
-| **DB_PASSWORD**           | Database password.                                            | *user specified*                      | string      | database    |
-| **BROADCAST_DRIVER**      | Broadcast driver for real-time events.                       | `pusher`, `redis`, `log`, `null`      | string      | broadcast   |
-| **CACHE_DRIVER**          | Cache system used by the application.                        | `file`, `database`, `redis`, `memcached`, `array` | string      | cache       |
-| **QUEUE_CONNECTION**      | Queue backend connection name.                               | `sync`, `database`, `redis`, `sqs`, *user specified* | string      | queue       |
-| **SESSION_DRIVER**        | Session storage mechanism.                                   | `file`, `cookie`, `database`, `redis`, `array` | string      | session     |
-| **SESSION_LIFETIME**      | Number of minutes that sessions are allowed to remain idle.| Integer, e.g., `120`                   | integer     | session     |
-| **MAIL_MAILER**           | Mail sending driver.                                         | `smtp`, `sendmail`, `mailgun`, `ses`, `postmark`, `log`, `array` | string      | mail        |
-| **MAIL_HOST**             | SMTP server hostname.                                       | *user specified*                      | string      | mail        |
-| **MAIL_PORT**             | SMTP server port.                                           | Typical ports like `587`, `465`, *user specified* | integer     | mail        |
-| **MAIL_USERNAME**         | SMTP username.                                             | *user specified*                      | string      | mail        |
-| **MAIL_PASSWORD**         | SMTP password.                                             | *user specified*                      | string      | mail        |
-| **MAIL_ENCRYPTION**       | Encryption protocol for mail.                              | `ssl`, `tls`, or empty (`null`)      | string      | mail        |
-| **MAIL_FROM_ADDRESS**     | Email address used as sender.                              | Valid email string                    | string      | mail        |
-| **MAIL_FROM_NAME**        | Sender name for emails.                                    | Any string                           | string      | mail        |
-| **PUSHER_APP_ID**         | Pusher app ID for broadcasting.                            | *user specified*                      | string      | pusher      |
-| **PUSHER_APP_KEY**        | Pusher app key.                                            | *user specified*                      | string      | pusher      |
-| **PUSHER_APP_SECRET**     | Pusher app secret.                                         | *user specified*                      | string      | pusher      |
-| **PUSHER_APP_CLUSTER**    | Pusher cluster location.                                  | *user specified*                      | string      | pusher      |
-| **AWS_ACCESS_KEY_ID**     | AWS access key (optional for services like S3).            | *user specified*                      | string      | aws         |
-| **AWS_SECRET_ACCESS_KEY** | AWS secret key.                                            | *user specified*                      | string      | aws         |
-| **AWS_DEFAULT_REGION**    | AWS region.                                               | e.g., `us-east-1`, `eu-west-1`       | string      | aws         |
-| **AWS_BUCKET**            | S3 bucket name.                                           | *user specified*                      | string      | aws         |
-| **VITE_PUSHER_APP_KEY**   | For frontend tooling with Vite using Pusher.                | *user specified*                      | string      | vite_pusher |
-| **VITE_PUSHER_HOST**      | Host for Pusher, often localhost or remote.                  | *user specified*                      | string      | vite_pusher |
-| **VITE_PUSHER_PORT**      | Port for Pusher.                                            | Common: `6001`                        | integer     | vite_pusher |
-| **VITE_PUSHER_SCHEME**    | Connection scheme,                      | `http`, `https`                      | string      | vite_pusher |
-| **VITE_PUSHER_APP_CLUSTER** | Pusher cluster, e.g., `mt1`.                               | *user specified*                      | string      | vite_pusher |
+## Getting Started
 
-### Groups
-- app
-- database
-- logging
-- mail
-- pusher
-- queue
-- session
-- aws
-- vite_pusher
+1. Open your project in any JetBrains IDE
+2. Look for the "Visual Env" tool window on the right side of your IDE
+3. The plugin will automatically detect your project type and load any existing environment variables
+4. If no `.env` file exists but an `.env.example` is found, you'll be prompted to create one
 
+## Usage
 
+### Viewing Environment Variables
+- Environment variables are displayed in the "Env Editor" tab, grouped by category
+- Toggle between different view modes using the toolbar buttons
+- Use the search field to filter variables by name or value
 
+### Editing Variables
+- Click on any variable value to edit it
+- Changes are saved automatically to your `.env` file
+- Special controls are provided for boolean variables (toggles) and enumerated types (dropdowns)
+
+### Running CLI Commands
+- Navigate to the "CLI Actions" tab to view available commands for your project type
+- Click on a command to execute it
+- View command output directly in the tool window
+- For commands requiring parameters, input fields will appear automatically
+
+## Supported Frameworks
+
+### Laravel
+- Full support for Laravel projects with predefined environment variables
+- Integrated artisan commands for environment management
+- Automatic Laravel project detection
+
+### Coming Soon
+- Node.js/npm projects
+- Django projects
+- Spring Boot applications
+
+## Requirements
+- IntelliJ Platform IDEs build 223+
+- Project must use environment variables in standard formats (`.env` files)
+
+## Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+- Thanks to the JetBrains team for their excellent SDK
+- Contributors and users who have provided valuable feedback
+
+---
+
+Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template).

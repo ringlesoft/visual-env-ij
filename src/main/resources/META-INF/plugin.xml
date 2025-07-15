@@ -2,14 +2,26 @@
 <idea-plugin>
     <id>com.ringlesoft.visualenv</id>
     <name>Visual Env</name>
-    <vendor email="support@ringlesoft.com" url="https://www.ringlesoft.com">RingleSoft</vendor>
+    <version>1.0.0</version>
+    <vendor email="ringunger@gmail.com" url="https://www.ringlesoft.com/plugins/visual-env">RingleSoft</vendor>
     <description><![CDATA[
-        A plugin for visualizing and managing environment variables in your projects.
+        <p>Visual Env helps you manage and interact with environment variables in your projects with a user-friendly interface.</p>
+        
+        <p><b>Key Features:</b></p>
         <ul>
-            <li>View system environment variables</li>
-            <li>Parse and display environment variables from .env files</li>
-            <li>Filter and search for specific environment variables</li>
-            <li>Automatic detection of secret/sensitive variables</li>
+            <li><b>Environment Variable Management</b> - View, edit, and organize environment variables from .env files</li>
+            <li><b>Framework Detection</b> - Automatically detects Laravel projects and adapts to project-specific settings</li>
+            <li><b>Type-Aware Interface</b> - Specialized UI controls for different variable types (toggles for booleans, dropdowns for enums)</li>
+            <li><b>CLI Command Integration</b> - Run framework-specific commands directly from the IDE</li>
+            <li><b>Smart Organization</b> - Group variables by category for better navigation</li>
+            <li><b>Template Support</b> - Create new .env files from .env.example templates with one click</li>
+        </ul>
+        
+        <p>
+        <b>Framework Support:</b></p>
+        <ul>
+            <li><b>Laravel</b> - Full support with predefined variables and artisan command integration</li>
+            <li>More frameworks coming soon!</li>
         </ul>
     ]]></description>
 
