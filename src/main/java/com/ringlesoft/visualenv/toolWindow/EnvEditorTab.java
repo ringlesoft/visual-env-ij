@@ -127,7 +127,7 @@ public class EnvEditorTab extends JPanel {
         refreshButton.setText("↻");
         refreshButton.setToolTipText("Refresh environment files");
         refreshButton.setForeground(VisualEnvTheme.PRIMARY);
-        refreshButton.addActionListener(e -> loadEnvFiles());
+        refreshButton.addActionListener(e -> reloadCurrentEnvFile());
         
         gbc.gridx = 2;
         gbc.weightx = 0.17;  // 1/6 of space

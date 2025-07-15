@@ -118,12 +118,13 @@ public final class EnvVariableService {
         }
         
         try {
+            if (value.contains(" ")) {
+                value = "\"" + value + "\"";
+            }
             // Use EnvFileManager to update the variable
             EnvFileManager.setEnvVariable(project, activeEnvFile, name, value);
-            
             // Update cache
             parseEnvFile(activeEnvFile);
-            
             return true;
         } catch (Exception e) {
             LOG.error("Failed to update env variable", e);
