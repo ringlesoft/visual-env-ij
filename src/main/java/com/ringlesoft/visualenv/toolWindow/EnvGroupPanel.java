@@ -43,7 +43,11 @@ public class EnvGroupPanel extends JPanel {
         setLayout(new BorderLayout());
         setBorder(VisualEnvTheme.PANEL_BORDER);
         
-        // Create header with expand/collapse
+        // Set alignment and sizing for proper scrolling behavior
+        setAlignmentX(Component.LEFT_ALIGNMENT);
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+        
+        // Create the title panel with a chevron for expand/collapse
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBorder(VisualEnvTheme.GROUP_HEADER_BORDER);
         

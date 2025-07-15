@@ -1,6 +1,7 @@
 package com.ringlesoft.visualenv.toolWindow;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,21 +143,24 @@ public class EnvEditorTab extends JPanel {
      * Create the main environment variables panel
      */
     private JPanel createEnvPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
+        // Main panel with BorderLayout to properly handle scrolling
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        
+        // Content panel that will hold all the environment group panels
         envVarsPanel = new JPanel();
         envVarsPanel.setLayout(new BoxLayout(envVarsPanel, BoxLayout.Y_AXIS));
         
-        // Add a glue component that will push everything to the top and take extra vertical space
-        panel.add(envVarsPanel);
-        panel.add(Box.createVerticalGlue());
-        
-        JScrollPane scrollPane = new JBScrollPane(panel);
+        // Configure scrolling
+        JScrollPane scrollPane = new JBScrollPane(envVarsPanel);
         scrollPane.setBorder(null);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
         
-        return panel;
+        // Add the scroll pane to the main panel
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        return mainPanel;
     }
     
     /**
