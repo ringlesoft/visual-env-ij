@@ -5,6 +5,7 @@ import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,14 +44,11 @@ public class EnvGroupPanel extends JPanel {
         
         // Setup panel
         setLayout(new BorderLayout());
-        setBorder(JBUI.Borders.empty(5));
+        setBorder(VisualEnvTheme.PANEL_BORDER);
         
         // Create header with expand/collapse
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY),
-                JBUI.Borders.empty(5)
-        ));
+        headerPanel.setBorder(VisualEnvTheme.GROUP_HEADER_BORDER);
         
         // Add expand/collapse icon
         JLabel expandIcon = new JLabel("▼");
@@ -79,13 +77,17 @@ public class EnvGroupPanel extends JPanel {
         // Create panel for variables
         variablesPanel = new JPanel();
         variablesPanel.setLayout(new BoxLayout(variablesPanel, BoxLayout.Y_AXIS));
-        variablesPanel.setBorder(JBUI.Borders.empty(10, 20, 5, 5));
+        variablesPanel.setBorder(VisualEnvTheme.VARIABLES_PANEL_BORDER);
         
         // Add each variable control
         for (int i = 0; i < variables.size(); i++) {
             EnvVariable variable = variables.get(i);
             JPanel varPanel = createControlForVariable(variable);
             variablesPanel.add(varPanel);
+            // Add a separator between variables
+            if (i < variables.size() - 1) {
+                variablesPanel.add(Box.createRigidArea(new Dimension(0, 1)));
+            }
         }
         
         // Add directly to the panel, not in a scroll pane
@@ -95,12 +97,12 @@ public class EnvGroupPanel extends JPanel {
     private JPanel createControlForVariable(EnvVariable variable) {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setBorder(JBUI.Borders.emptyBottom(5));
+        panel.setBorder(VisualEnvTheme.VARIABLE_PANEL_BORDER);
         
         // Create variable name label
         JLabel nameLabel = new JLabel(variable.getName() + ":");
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD));
-        nameLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 10));
+        nameLabel.setBorder(VisualEnvTheme.VARIABLE_NAME_BORDER);
         nameLabel.setToolTipText(getDescriptionForVariable(variable));
         panel.add(nameLabel, BorderLayout.WEST);
         
@@ -138,8 +140,7 @@ public class EnvGroupPanel extends JPanel {
         JTextField textField;
         
         if (isSecret) {
-            JPasswordField passwordField = new JPasswordField(variable.getValue());
-            textField = passwordField;
+            textField = new JPasswordField(variable.getValue());
         } else {
             textField = new JTextField(variable.getValue());
         }

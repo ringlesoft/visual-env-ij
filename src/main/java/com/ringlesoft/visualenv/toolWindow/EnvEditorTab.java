@@ -24,6 +24,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.ringlesoft.visualenv.ui.VisualEnvTheme;
+
 /**
  * Tab for displaying and editing environment variables
  */
@@ -68,8 +70,6 @@ public class EnvEditorTab extends JPanel {
      */
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.empty(5));
-        
         // Create a panel with custom layout to achieve the 3:2:1 ratio
         JPanel fileSelectorPanel = new JPanel();
         fileSelectorPanel.setLayout(new GridBagLayout());
@@ -103,7 +103,7 @@ public class EnvEditorTab extends JPanel {
         
         // File label and dropdown taking 2/6 of space
         JPanel filePanel = new JPanel(new BorderLayout(5, 0));
-        filePanel.add(new JBLabel("File:"), BorderLayout.WEST);
+//        filePanel.add(new JBLabel("File:"), BorderLayout.WEST);
         
         envFileSelector = new ComboBox<>();
         envFileSelector.addItemListener(e -> {
@@ -118,13 +118,14 @@ public class EnvEditorTab extends JPanel {
         filePanel.add(envFileSelector, BorderLayout.CENTER);
         
         gbc.gridx = 1;
-        gbc.weightx = 0.33;  // 2/6 of space
+        gbc.weightx = 0.2;  // 2/6 of space
         fileSelectorPanel.add(filePanel, gbc);
         
         // Refresh button taking 1/6 of space
         JButton refreshButton = new JButton();
         refreshButton.setText("↻");
         refreshButton.setToolTipText("Refresh environment files");
+        refreshButton.setForeground(VisualEnvTheme.PRIMARY);
         refreshButton.addActionListener(e -> loadEnvFiles());
         
         gbc.gridx = 2;
@@ -141,8 +142,8 @@ public class EnvEditorTab extends JPanel {
      * Create the main environment variables panel
      */
     private JPanel createEnvPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.empty(5));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         envVarsPanel = new JPanel();
         envVarsPanel.setLayout(new BoxLayout(envVarsPanel, BoxLayout.Y_AXIS));

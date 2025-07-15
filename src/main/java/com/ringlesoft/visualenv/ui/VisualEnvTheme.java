@@ -54,6 +54,9 @@ public class VisualEnvTheme {
             BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
             JBUI.Borders.empty(5)
     );
+    public static Border VARIABLES_PANEL_BORDER = JBUI.Borders.empty(10, 20, 5, 5);
+    public static Border VARIABLE_PANEL_BORDER = JBUI.Borders.emptyBottom(5);
+    public static Border VARIABLE_NAME_BORDER = JBUI.Borders.emptyRight(10);
     
     // Text field borders
     public static Border TEXT_FIELD_BORDER = BorderFactory.createCompoundBorder(
