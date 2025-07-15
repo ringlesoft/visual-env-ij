@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.JBUI;
+import com.ringlesoft.visualenv.listeners.FileSaveListener;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvVariableService;
 import com.ringlesoft.visualenv.services.ProjectService;
@@ -18,7 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
-public class VisualEnvToolWindowFactory implements ToolWindowFactory {
+public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoCloseable {
 
     private Project project;
     private EnvVariableService envService;
@@ -38,6 +39,8 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         this.project = project;
         this.envService = project.getService(EnvVariableService.class);
         this.projectService = project.getService(ProjectService.class);
+
+
 
         mainPanel = new JPanel(new BorderLayout());
         controlPanel = createControlPanel();
@@ -183,5 +186,10 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
     public boolean shouldBeAvailable(@NotNull Project project) {
         // Always make the tool window available
         return true;
+    }
+
+    @Override
+    public void close() throws Exception {
+        // Dispose everything held by this tool window
     }
 }

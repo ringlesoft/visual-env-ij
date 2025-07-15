@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
+import com.ringlesoft.visualenv.listeners.FileSaveListener;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.services.EnvVariableService;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Tab for displaying and editing environment variables
  */
-public class EnvEditorTab extends JPanel {
+public class EnvEditorTab extends JPanel implements AutoCloseable {
     
     private final Project project;
     private final EnvVariableService envVariableService;
@@ -40,6 +41,7 @@ public class EnvEditorTab extends JPanel {
     private final Map<String, EnvGroupPanel> groupPanels = new HashMap<>();
     private VirtualFile selectedEnvFile;
     private final Map<String, String> fileBasenameToPath = new HashMap<>();
+    private FileSaveListener fileSaveListener;
 
     /**
      * Create a new Environment editor tab
@@ -51,6 +53,12 @@ public class EnvEditorTab extends JPanel {
         this.project = project;
         this.envVariableService = envVariableService;
         this.projectService = projectService;
+
+        //Listeners
+        // In your tool window factory or constructor
+        fileSaveListener = new FileSaveListener(project, envVariableService);
+        fileSaveListener.setEnvEditorTab(this);
+        fileSaveListener.setupListener();
         
         setLayout(new BorderLayout());
         
@@ -80,6 +88,7 @@ public class EnvEditorTab extends JPanel {
         
         // Filter field taking 3/6 of space
         filterField = new JBTextField();
+        filterField.setToolTipText("Search");
         filterField.putClientProperty("placeholder.text", "Search");
         filterField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -125,7 +134,7 @@ public class EnvEditorTab extends JPanel {
         // Refresh button taking 1/6 of space
         JButton refreshButton = new JButton();
         refreshButton.setText("↻");
-        refreshButton.setToolTipText("Refresh environment files");
+        refreshButton.setToolTipText("Refresh");
         refreshButton.setForeground(VisualEnvTheme.PRIMARY);
         refreshButton.addActionListener(e -> reloadCurrentEnvFile());
         
@@ -350,9 +359,14 @@ public class EnvEditorTab extends JPanel {
     /**
      * Reload the currently selected environment file
      */
-    private void reloadCurrentEnvFile() {
+    public void reloadCurrentEnvFile() {
         if (selectedEnvFile != null) {
             loadEnvFile(selectedEnvFile.getPath());
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        fileSaveListener.dispose();
     }
 }

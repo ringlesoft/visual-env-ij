@@ -618,4 +618,8 @@ public final class EnvVariableService {
         
         return null;
     }
+
+    public VirtualFile findFileByPath(String selectedFilePath) {
+        return LocalFileSystem.getInstance().findFileByPath(selectedFilePath);
+    }
 }
