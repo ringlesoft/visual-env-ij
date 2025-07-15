@@ -129,11 +129,12 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         tabbedPane.addTab("Environment Variables", envPanel);
         
         // Add CLI Commands tab if supported
+        // This tab is currently Disabled
         if (envService.getActiveProfile().supportsArtisanCommands()) {
             JPanel artisanPanel = createCliActionsPanel();
             tabbedPane.addTab("CLI Commands", artisanPanel);
         }
-        
+
         // Refresh UI
         mainPanel.revalidate();
         mainPanel.repaint();

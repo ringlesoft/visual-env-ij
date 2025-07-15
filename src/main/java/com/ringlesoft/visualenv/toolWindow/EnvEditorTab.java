@@ -1,18 +1,16 @@
 package com.ringlesoft.visualenv.toolWindow;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
-import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import javax.swing.*;
@@ -21,11 +19,10 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 
 /**
  * Tab for displaying and editing environment variables
