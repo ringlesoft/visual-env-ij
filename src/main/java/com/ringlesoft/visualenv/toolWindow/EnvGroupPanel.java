@@ -370,7 +370,9 @@ public class EnvGroupPanel extends JPanel {
         
         // Create a new timer
         Timer timer = new Timer(DEBOUNCE_DELAY, e -> {
-            updateVariable(variableName, value);
+            com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
+                updateVariable(variableName, value);
+            }, com.intellij.openapi.application.ModalityState.defaultModalityState());
         });
         timer.setRepeats(false);
         timer.start();
