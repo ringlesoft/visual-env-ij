@@ -73,7 +73,7 @@ public class EnvEditorTab extends JPanel {
         JPanel fileSelectorPanel = new JPanel(new BorderLayout());
         
         JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.add(new JBLabel("Env File:"), BorderLayout.WEST);
+        leftPanel.add(new JBLabel("File:"), BorderLayout.WEST);
         
         envFileSelector = new ComboBox<>();
         envFileSelector.addItemListener(e -> {

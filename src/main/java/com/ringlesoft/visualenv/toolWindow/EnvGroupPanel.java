@@ -1,18 +1,12 @@
 package com.ringlesoft.visualenv.toolWindow;
 
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.services.EnvVariableService;
-import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import javax.swing.*;
-import javax.swing.JPasswordField;
-import javax.swing.JOptionPane;
-import javax.swing.JCheckBox;
-import javax.swing.JButton;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
@@ -35,7 +29,6 @@ public class EnvGroupPanel extends JPanel {
     private boolean expanded = true;
     private EnvEditorTab parentTab;
     private String currentFilter;
-    private JScrollPane scrollPane;
     
     // Debounce related fields
     private final Map<String, Timer> debounceTimers = new HashMap<>();
@@ -92,16 +85,11 @@ public class EnvGroupPanel extends JPanel {
         for (int i = 0; i < variables.size(); i++) {
             EnvVariable variable = variables.get(i);
             JPanel varPanel = createControlForVariable(variable);
-            createActions(varPanel, variable, i);
             variablesPanel.add(varPanel);
         }
         
-        addAddVariableButton();
-        
-        // Add to scroll pane to handle overflow
-        JScrollPane scrollPane = new JScrollPane(variablesPanel);
-        scrollPane.setBorder(null);
-        add(scrollPane, BorderLayout.CENTER);
+        // Add directly to the panel, not in a scroll pane
+        add(variablesPanel, BorderLayout.CENTER);
     }
     
     private JPanel createControlForVariable(EnvVariable variable) {
@@ -124,24 +112,6 @@ public class EnvGroupPanel extends JPanel {
         variableComponents.put(variable.getName(), panel);
         
         return panel;
-    }
-    
-    private void createActions(JPanel panel, EnvVariable variable, int variableRow) {
-        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        
-        // Edit button
-        JButton editButton = new JButton("Edit");
-        editButton.setToolTipText("Edit this environment variable");
-        editButton.addActionListener(e -> showEditDialog(variable));
-        actionsPanel.add(editButton);
-        
-        // Delete button
-        JButton deleteButton = new JButton("Delete");
-        deleteButton.setToolTipText("Delete this environment variable");
-        deleteButton.addActionListener(e -> showDeleteConfirmation(variable));
-        actionsPanel.add(deleteButton);
-        
-        panel.add(actionsPanel, BorderLayout.EAST);
     }
     
     private Component createControlByType(EnvVariable variable) {
@@ -290,119 +260,6 @@ public class EnvGroupPanel extends JPanel {
         }
     }
     
-    /**
-     * Display a dialog to edit an environment variable
-     * @param variable The variable to edit
-     */
-    private void showEditDialog(EnvVariable variable) {
-        JTextField keyField = new JTextField(variable.getName());
-        JTextField valueField = new JTextField(variable.getValue());
-        
-        if (variable.isSecret()) {
-            // For secret variables, show a masked field
-            valueField = new JPasswordField(variable.getValue());
-        }
-        
-        JPanel panel = new JPanel(new GridLayout(0, 1));
-        panel.add(new JLabel("Variable Name:"));
-        panel.add(keyField);
-        panel.add(new JLabel("Variable Value:"));
-        panel.add(valueField);
-        
-        int result = JOptionPane.showConfirmDialog(
-            this, 
-            panel, 
-            "Edit Environment Variable", 
-            JOptionPane.OK_CANCEL_OPTION, 
-            JOptionPane.PLAIN_MESSAGE
-        );
-        
-        if (result == JOptionPane.OK_OPTION) {
-            String newName = keyField.getText().trim();
-            String newValue = valueField.getText();
-            
-            // Only proceed if name is not empty
-            if (!newName.isEmpty()) {
-                if (!newName.equals(variable.getName())) {
-                    // Name has changed, we need to remove the old variable and add a new one
-                    parentTab.removeEnvironmentVariable(variable.getName());
-                    parentTab.addEnvironmentVariable(newName, newValue);
-                    statusUpdater.accept("Updated variable: " + newName);
-                } else {
-                    // Just update the value
-                    parentTab.updateEnvironmentVariable(newName, newValue);
-                    statusUpdater.accept("Updated variable value: " + newName);
-                }
-            }
-        }
-    }
-    
-    /**
-     * Display a confirmation dialog before deleting an environment variable
-     * @param variable The variable to delete
-     */
-    private void showDeleteConfirmation(EnvVariable variable) {
-        int result = JOptionPane.showConfirmDialog(
-            this, 
-            "Are you sure you want to delete the variable " + variable.getName() + "?", 
-            "Confirm Delete", 
-            JOptionPane.YES_NO_OPTION, 
-            JOptionPane.WARNING_MESSAGE
-        );
-        
-        if (result == JOptionPane.YES_OPTION) {
-            parentTab.removeEnvironmentVariable(variable.getName());
-            statusUpdater.accept("Deleted variable: " + variable.getName());
-        }
-    }
-    
-    /**
-     * Add a new environment variable button and functionality
-     */
-    public void addAddVariableButton() {
-        JButton addButton = new JButton("+ Add Variable");
-        addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        addButton.addActionListener(e -> showAddDialog());
-        
-        // Add button at the bottom of the variables list
-        variablesPanel.add(addButton);
-    }
-    
-    /**
-     * Display a dialog to add a new environment variable
-     */
-    private void showAddDialog() {
-        JTextField keyField = new JTextField();
-        JTextField valueField = new JTextField();
-        JCheckBox secretCheckBox = new JCheckBox("Secret value (mask in UI)");
-        
-        JPanel panel = new JPanel(new GridLayout(0, 1));
-        panel.add(new JLabel("Variable Name:"));
-        panel.add(keyField);
-        panel.add(new JLabel("Variable Value:"));
-        panel.add(valueField);
-        panel.add(secretCheckBox);
-        
-        int result = JOptionPane.showConfirmDialog(
-            this, 
-            panel, 
-            "Add Environment Variable", 
-            JOptionPane.OK_CANCEL_OPTION, 
-            JOptionPane.PLAIN_MESSAGE
-        );
-        
-        if (result == JOptionPane.OK_OPTION) {
-            String name = keyField.getText().trim();
-            String value = valueField.getText();
-            
-            // Only proceed if name is not empty
-            if (!name.isEmpty()) {
-                parentTab.addEnvironmentVariable(name, value);
-                statusUpdater.accept("Added new variable: " + name);
-            }
-        }
-    }
-
     /**
      * Refresh the display with updated variables
      * @param updatedVariables The updated list of variables
