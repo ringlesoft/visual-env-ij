@@ -52,7 +52,7 @@ public class EnvGroupPanel extends JPanel {
         headerPanel.setBorder(VisualEnvTheme.GROUP_HEADER_BORDER);
         
         // Add expand/collapse icon
-        JLabel expandIcon = new JLabel("▼");
+        JLabel expandIcon = new JLabel("-");
         expandIcon.setPreferredSize(new Dimension(20, 20));
         headerPanel.add(expandIcon, BorderLayout.WEST);
         
@@ -66,7 +66,7 @@ public class EnvGroupPanel extends JPanel {
         headerPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 expanded = !expanded;
-                expandIcon.setText(expanded ? "▼" : "▶");
+                expandIcon.setText(expanded ? "-" : "+");
                 variablesPanel.setVisible(expanded);
                 revalidate();
                 repaint();
@@ -85,13 +85,7 @@ public class EnvGroupPanel extends JPanel {
             EnvVariable variable = variables.get(i);
             JPanel varPanel = createControlForVariable(variable);
             variablesPanel.add(varPanel);
-            // Add a separator between variables
-            if (i < variables.size() - 1) {
-                variablesPanel.add(Box.createRigidArea(new Dimension(0, 1)));
-            }
         }
-        
-        // Add directly to the panel, not in a scroll pane
         add(variablesPanel, BorderLayout.CENTER);
     }
     
