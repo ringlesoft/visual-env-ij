@@ -8,16 +8,22 @@ public class EnvVariable {
     private final String value;
     private final String source;
     private final boolean isSecret;
+    private final String group;
 
     public EnvVariable(String name, String value, String source) {
-        this(name, value, source, false);
+        this(name, value, source, false, "other");
     }
 
     public EnvVariable(String name, String value, String source, boolean isSecret) {
+        this(name, value, source, isSecret, "other");
+    }
+
+    public EnvVariable(String name, String value, String source, boolean isSecret, String group) {
         this.name = name;
         this.value = value;
         this.source = source;
         this.isSecret = isSecret;
+        this.group = group;
     }
 
     public String getName() {
@@ -38,6 +44,10 @@ public class EnvVariable {
 
     public boolean isSecret() {
         return isSecret;
+    }
+
+    public String getGroup() {
+        return group;
     }
 
     @Override
