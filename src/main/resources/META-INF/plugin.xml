@@ -1,0 +1,26 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.ringlesoft.visualenv</id>
+    <name>Visual Env</name>
+    <vendor email="support@ringlesoft.com" url="https://www.ringlesoft.com">RingleSoft</vendor>
+    <description><![CDATA[
+        A plugin for visualizing and managing environment variables in your projects.
+        <ul>
+            <li>View system environment variables</li>
+            <li>Parse and display environment variables from .env files</li>
+            <li>Filter and search for specific environment variables</li>
+            <li>Automatic detection of secret/sensitive variables</li>
+        </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.MyBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow factoryClass="com.ringlesoft.visualenv.toolWindow.VisualEnvToolWindowFactory" id="VisualEnv" 
+                    anchor="right" secondary="true" icon="AllIcons.General.Settings"/>
+        <postStartupActivity implementation="com.ringlesoft.visualenv.startup.ProjectStartupActivity" />
+        <projectService serviceImplementation="com.ringlesoft.visualenv.services.EnvVariableService"/>
+    </extensions>
+</idea-plugin>
