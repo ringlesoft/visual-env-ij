@@ -77,43 +77,12 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         
         // First row - project type and profile selector
         JPanel projectTypePanel = new JPanel(new BorderLayout());
-        
+
         // Add project type detection label
-        String projectType = ProjectDetector.getProjectType(project);
-        projectTypeLabel = new JBLabel("Project type: " + projectType);
+        String profileName = envService.getActiveProfile().getProfileName();
+        projectTypeLabel = new JBLabel("Profile: " + profileName);
         projectTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
         projectTypePanel.add(projectTypeLabel, BorderLayout.WEST);
-        
-        // Add profile selector
-        JPanel profilePanel = new JPanel(new BorderLayout());
-        profilePanel.add(new JBLabel("Profile:"), BorderLayout.WEST);
-        
-        profileSelector = new ComboBox<>();
-        
-        // Populate profiles
-        availableProfiles = new HashMap<>();
-        for (EnvProfile profile : ProfileManager.getAllProfiles()) {
-            profileSelector.addItem(profile.getProfileName());
-            availableProfiles.put(profile.getProfileName(), profile);
-        }
-        
-        // Set the current profile
-        profileSelector.setSelectedItem(envService.getActiveProfile().getProfileName());
-        
-        // Add listener to change profile
-        profileSelector.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String profileName = (String) profileSelector.getSelectedItem();
-                EnvProfile selectedProfile = availableProfiles.get(profileName);
-                if (selectedProfile != null) {
-                    envService.setActiveProfile(selectedProfile);
-                    updateUI();
-                }
-            }
-        });
-        
-        profilePanel.add(profileSelector, BorderLayout.CENTER);
-        projectTypePanel.add(profilePanel, BorderLayout.EAST);
         
         topPanel.add(projectTypePanel);
         panel.add(topPanel, BorderLayout.NORTH);
@@ -169,6 +138,42 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         mainPanel.revalidate();
         mainPanel.repaint();
     }
+
+
+    /**
+     * Add a new environment variable button and functionality
+     */
+    public void addAddVariableButton() {
+        JButton addButton = new JButton("+ Add Variable");
+        addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        addButton.addActionListener(e -> {
+            // Create a new panel with text fields for key and value
+            JPanel newVarPanel = new JPanel(new BorderLayout(10, 0));
+            newVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            newVarPanel.setBorder(JBUI.Borders.emptyBottom(5));
+
+            JTextField keyField = new JTextField("NEW_VARIABLE");
+            keyField.setBorder(JBUI.Borders.emptyRight(10));
+            JTextField valueField = new JTextField("");
+
+            newVarPanel.add(keyField, BorderLayout.WEST);
+            newVarPanel.add(valueField, BorderLayout.CENTER);
+
+            // Insert it before the add button
+            contentPanel.add(newVarPanel, contentPanel.getComponentCount() - 1);
+
+            // Focus the key field
+            keyField.requestFocus();
+            keyField.selectAll();
+            // Refresh UI
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        });
+
+        contentPanel.add(addButton);
+    }
+
+
     
     private JPanel getContentPanel() {
         return contentPanel;
