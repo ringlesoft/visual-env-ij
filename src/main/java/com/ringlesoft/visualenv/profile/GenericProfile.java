@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
 import java.util.*;
@@ -95,7 +96,21 @@ public class GenericProfile implements EnvProfile {
     public String[] getCommonEnvFiles() {
         return new String[] {".env", ".env.local"};
     }
-    
+
+
+    @Override
+    public List<EnvFileDefinition> getEnvFileDefinitions() {
+        List<EnvFileDefinition> definitions = new ArrayList<>();
+        
+        // Primary .env file
+        definitions.add(EnvFileDefinition.createPrimaryEnv());
+        
+        // Local overrides
+        definitions.add(EnvFileDefinition.createLocalEnv());
+        
+        return definitions;
+    }
+
     /**
      * Registers a predefined environment variable in the registry.
      *

@@ -17,6 +17,7 @@ public class ProfileManager {
         // Register all available profiles
         AVAILABLE_PROFILES.add(new LaravelProfile());
         AVAILABLE_PROFILES.add(new NodeJSProfile());
+        AVAILABLE_PROFILES.add(new DjangoProfile());
         AVAILABLE_PROFILES.add(new GenericProfile());
         // More profiles can be added here
     }
@@ -34,7 +35,7 @@ public class ProfileManager {
         } else if (ProjectDetector.isNodeJSProject(project)) {
             return getProfileByName("NodeJS");
         } else if (ProjectDetector.isDjangoProject(project)) {
-            return getProfileByName("Django"); // This will return the generic profile since we don't have a Django profile yet
+            return getProfileByName("Django");
         }
         // Add more project type detections here
         

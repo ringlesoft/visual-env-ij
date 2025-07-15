@@ -33,8 +33,14 @@ public class EnvVariableDefinition {
      * @param group          Group this variable belongs to
      * @param isSecret       Whether this variable contains sensitive data
      */
-    public EnvVariableDefinition(String name, String description, List<String> possibleValues, 
-                                VariableType type, String group, boolean isSecret) {
+    public EnvVariableDefinition(
+            String name,
+            String description,
+            List<String> possibleValues,
+            VariableType type,
+            String group,
+            boolean isSecret)
+    {
         this.name = name;
         this.description = description;
         this.possibleValues = possibleValues != null ? possibleValues : Collections.emptyList();

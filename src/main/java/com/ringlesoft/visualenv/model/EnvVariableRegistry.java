@@ -8,7 +8,7 @@ import java.util.*;
  */
 public class EnvVariableRegistry {
     private static final Map<String, EnvVariableDefinition> REGISTRY = new HashMap<>();
-    
+
     // Groups
     public static final String GROUP_APP = "app";
     public static final String GROUP_DATABASE = "database";
@@ -25,329 +25,369 @@ public class EnvVariableRegistry {
     static {
         // App variables
         register(
-            "APP_NAME", 
-            "The name of your application", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_APP
+                "APP_NAME",
+                "The name of your application",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_APP,
+                false
         );
-        
+
         register(
-            "APP_ENV", 
-            "The application environment", 
-            Arrays.asList("local", "production", "staging", "testing"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_APP
+                "APP_ENV",
+                "The application environment",
+                Arrays.asList("local", "production", "staging", "testing"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_APP,
+                false
         );
-        
+
         register(
-            "APP_KEY", 
-            "Application encryption key used for encryption and sessions", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_APP
+                "APP_KEY",
+                "Application encryption key used for encryption and sessions",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_APP,
+                true
         );
-        
+
         register(
-            "APP_DEBUG", 
-            "Enables debug mode for detailed error messages", 
-            Arrays.asList("true", "false"), 
-            EnvVariableDefinition.VariableType.BOOLEAN, 
-            GROUP_APP
+                "APP_DEBUG",
+                "Enables debug mode for detailed error messages",
+                Arrays.asList("true", "false"),
+                EnvVariableDefinition.VariableType.BOOLEAN,
+                GROUP_APP,
+                false
         );
-        
+
         register(
-            "APP_URL", 
-            "The URL of your application", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_APP
+                "APP_URL",
+                "The URL of your application",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_APP,
+                false
         );
-        
+
         // Logging variables
         register(
-            "LOG_CHANNEL", 
-            "Specifies the default logging channel", 
-            Arrays.asList("stack", "single", "daily", "slack"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_LOGGING
+                "LOG_CHANNEL",
+                "Specifies the default logging channel",
+                Arrays.asList("stack", "single", "daily", "slack"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_LOGGING,
+                false
         );
-        
+
         register(
-            "LOG_LEVEL", 
-            "Minimum log level to record", 
-            Arrays.asList("debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_LOGGING
+                "LOG_LEVEL",
+                "Minimum log level to record",
+                Arrays.asList("debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_LOGGING,
+                false
         );
-        
+
         // Database variables
         register(
-            "DB_CONNECTION", 
-            "Database connection driver", 
-            Arrays.asList("mysql", "pgsql", "sqlite", "sqlsrv"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_DATABASE
+                "DB_CONNECTION",
+                "Database connection driver",
+                Arrays.asList("mysql", "pgsql", "sqlite", "sqlsrv"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_DATABASE,
+                false
         );
-        
+
         register(
-            "DB_HOST", 
-            "Database server host", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_DATABASE
+                "DB_HOST",
+                "Database server host",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_DATABASE,
+                false
         );
-        
+
         register(
-            "DB_PORT", 
-            "Database server port", 
-            null, 
-            EnvVariableDefinition.VariableType.INTEGER, 
-            GROUP_DATABASE
+                "DB_PORT",
+                "Database server port",
+                null,
+                EnvVariableDefinition.VariableType.INTEGER,
+                GROUP_DATABASE,
+                false
         );
-        
+
         register(
-            "DB_DATABASE", 
-            "Name of the database", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_DATABASE
+                "DB_DATABASE",
+                "Name of the database",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_DATABASE,
+                false
         );
-        
+
         register(
-            "DB_USERNAME", 
-            "Database username", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_DATABASE
+                "DB_USERNAME",
+                "Database username",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_DATABASE,
+                false
         );
-        
+
         register(
-            "DB_PASSWORD", 
-            "Database password", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_DATABASE
+                "DB_PASSWORD",
+                "Database password",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_DATABASE,
+                true
         );
-        
+
         // Broadcast, Cache, Queue variables
         register(
-            "BROADCAST_DRIVER", 
-            "Broadcast driver for real-time events", 
-            Arrays.asList("pusher", "redis", "log", "null"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_BROADCAST
+                "BROADCAST_DRIVER",
+                "Broadcast driver for real-time events",
+                Arrays.asList("pusher", "redis", "log", "null"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_BROADCAST,
+                false
         );
-        
+
         register(
-            "CACHE_DRIVER", 
-            "Cache system used by the application", 
-            Arrays.asList("file", "database", "redis", "memcached", "array"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_CACHE
+                "CACHE_DRIVER",
+                "Cache system used by the application",
+                Arrays.asList("file", "database", "redis", "memcached", "array"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_CACHE,
+                false
         );
-        
+
         register(
-            "QUEUE_CONNECTION", 
-            "Queue backend connection name", 
-            Arrays.asList("sync", "database", "redis", "sqs"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_QUEUE
+                "QUEUE_CONNECTION",
+                "Queue backend connection name",
+                Arrays.asList("sync", "database", "redis", "sqs"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_QUEUE,
+                false
         );
-        
+
         // Session variables
         register(
-            "SESSION_DRIVER", 
-            "Session storage mechanism", 
-            Arrays.asList("file", "cookie", "database", "redis", "array"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_SESSION
+                "SESSION_DRIVER",
+                "Session storage mechanism",
+                Arrays.asList("file", "cookie", "database", "redis", "array"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_SESSION,
+                false
         );
-        
+
         register(
-            "SESSION_LIFETIME", 
-            "Number of minutes that sessions are allowed to remain idle", 
-            null, 
-            EnvVariableDefinition.VariableType.INTEGER, 
-            GROUP_SESSION
+                "SESSION_LIFETIME",
+                "Number of minutes that sessions are allowed to remain idle",
+                null,
+                EnvVariableDefinition.VariableType.INTEGER,
+                GROUP_SESSION,
+                false
         );
-        
+
         // Mail variables
         register(
-            "MAIL_MAILER", 
-            "Mail sending driver", 
-            Arrays.asList("smtp", "sendmail", "mailgun", "ses", "postmark", "log", "array"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_MAIL
+                "MAIL_MAILER",
+                "Mail sending driver",
+                Arrays.asList("smtp", "sendmail", "mailgun", "ses", "postmark", "log", "array"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_HOST", 
-            "SMTP server hostname", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_MAIL
+                "MAIL_HOST",
+                "SMTP server hostname",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_PORT", 
-            "SMTP server port", 
-            null, 
-            EnvVariableDefinition.VariableType.INTEGER, 
-            GROUP_MAIL
+                "MAIL_PORT",
+                "SMTP server port",
+                null,
+                EnvVariableDefinition.VariableType.INTEGER,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_USERNAME", 
-            "SMTP username", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_MAIL
+                "MAIL_USERNAME",
+                "SMTP username",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_PASSWORD", 
-            "SMTP password", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_MAIL
+                "MAIL_PASSWORD",
+                "SMTP password",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_MAIL,
+                true
         );
-        
+
         register(
-            "MAIL_ENCRYPTION", 
-            "Encryption protocol for mail", 
-            Arrays.asList("ssl", "tls", ""), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_MAIL
+                "MAIL_ENCRYPTION",
+                "Encryption protocol for mail",
+                Arrays.asList("ssl", "tls", ""),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_FROM_ADDRESS", 
-            "Email address used as sender", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_MAIL
+                "MAIL_FROM_ADDRESS",
+                "Email address used as sender",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_MAIL,
+                false
         );
-        
+
         register(
-            "MAIL_FROM_NAME", 
-            "Sender name for emails", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_MAIL
+                "MAIL_FROM_NAME",
+                "Sender name for emails",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_MAIL,
+                false
         );
-        
+
         // Pusher variables
         register(
-            "PUSHER_APP_ID", 
-            "Pusher app ID for broadcasting", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_PUSHER
+                "PUSHER_APP_ID",
+                "Pusher app ID for broadcasting",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_PUSHER,
+                false
         );
-        
+
         register(
-            "PUSHER_APP_KEY", 
-            "Pusher app key", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_PUSHER
+                "PUSHER_APP_KEY",
+                "Pusher app key",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_PUSHER,
+                false
         );
-        
+
         register(
-            "PUSHER_APP_SECRET", 
-            "Pusher app secret", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_PUSHER
+                "PUSHER_APP_SECRET",
+                "Pusher app secret",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_PUSHER,
+                true
         );
-        
+
         register(
-            "PUSHER_APP_CLUSTER", 
-            "Pusher cluster location", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_PUSHER
+                "PUSHER_APP_CLUSTER",
+                "Pusher cluster location",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_PUSHER,
+                false
         );
-        
+
         // AWS variables
         register(
-            "AWS_ACCESS_KEY_ID", 
-            "AWS access key", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_AWS
+                "AWS_ACCESS_KEY_ID",
+                "AWS access key",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_AWS,
+                false
         );
-        
+
         register(
-            "AWS_SECRET_ACCESS_KEY", 
-            "AWS secret key", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_AWS
+                "AWS_SECRET_ACCESS_KEY",
+                "AWS secret key",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_AWS,
+                true
         );
-        
+
         register(
-            "AWS_DEFAULT_REGION", 
-            "AWS region", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_AWS
+                "AWS_DEFAULT_REGION",
+                "AWS region",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_AWS,
+                false
         );
-        
+
         register(
-            "AWS_BUCKET", 
-            "S3 bucket name", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_AWS
+                "AWS_BUCKET",
+                "S3 bucket name",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_AWS,
+                false
         );
-        
+
         // Vite Pusher variables
         register(
-            "VITE_PUSHER_APP_KEY", 
-            "For frontend tooling with Vite using Pusher", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_VITE_PUSHER
+                "VITE_PUSHER_APP_KEY",
+                "For frontend tooling with Vite using Pusher",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_VITE_PUSHER,
+                true
         );
-        
+
         register(
-            "VITE_PUSHER_HOST", 
-            "Host for Pusher, often localhost or remote", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_VITE_PUSHER
+                "VITE_PUSHER_HOST",
+                "Host for Pusher, often localhost or remote",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_VITE_PUSHER,
+                false
         );
-        
+
         register(
-            "VITE_PUSHER_PORT", 
-            "Port for Pusher", 
-            null, 
-            EnvVariableDefinition.VariableType.INTEGER, 
-            GROUP_VITE_PUSHER
+                "VITE_PUSHER_PORT",
+                "Port for Pusher",
+                null,
+                EnvVariableDefinition.VariableType.INTEGER,
+                GROUP_VITE_PUSHER,
+                false
         );
-        
+
         register(
-            "VITE_PUSHER_SCHEME", 
-            "Connection scheme", 
-            Arrays.asList("http", "https"), 
-            EnvVariableDefinition.VariableType.DROPDOWN, 
-            GROUP_VITE_PUSHER
+                "VITE_PUSHER_SCHEME",
+                "Connection scheme",
+                Arrays.asList("http", "https"),
+                EnvVariableDefinition.VariableType.DROPDOWN,
+                GROUP_VITE_PUSHER,
+                false
         );
-        
+
         register(
-            "VITE_PUSHER_APP_CLUSTER", 
-            "Pusher cluster, e.g., 'mt1'", 
-            null, 
-            EnvVariableDefinition.VariableType.STRING, 
-            GROUP_VITE_PUSHER
+                "VITE_PUSHER_APP_CLUSTER",
+                "Pusher cluster, e.g., 'mt1'",
+                null,
+                EnvVariableDefinition.VariableType.STRING,
+                GROUP_VITE_PUSHER,
+                false
         );
     }
 
-    private static void register(String name, String description, List<String> possibleValues, 
-                                EnvVariableDefinition.VariableType type, String group) {
-        EnvVariableDefinition definition = new EnvVariableDefinition(name, description, possibleValues, type, group);
+    private static void register(String name, String description, List<String> possibleValues,
+                                 EnvVariableDefinition.VariableType type, String group, boolean isSecret) {
+
+        EnvVariableDefinition definition = new EnvVariableDefinition(name, description, possibleValues, type, group, isSecret);
         REGISTRY.put(name, definition);
     }
 
@@ -379,13 +419,13 @@ public class EnvVariableRegistry {
      */
     public static List<EnvVariableDefinition> getDefinitionsForGroup(String group) {
         List<EnvVariableDefinition> result = new ArrayList<>();
-        
+
         for (EnvVariableDefinition definition : REGISTRY.values()) {
             if (group.equals(definition.getGroup())) {
                 result.add(definition);
             }
         }
-        
+
         return result;
     }
 
@@ -396,11 +436,11 @@ public class EnvVariableRegistry {
      */
     public static Set<String> getAllGroups() {
         Set<String> groups = new HashSet<>();
-        
+
         for (EnvVariableDefinition definition : REGISTRY.values()) {
             groups.add(definition.getGroup());
         }
-        
+
         return Collections.unmodifiableSet(groups);
     }
 

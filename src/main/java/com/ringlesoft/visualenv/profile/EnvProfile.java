@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
 import java.util.List;
@@ -8,72 +9,81 @@ import java.util.Set;
 
 /**
  * Interface for environment variable profiles.
- * Different profiles can provide project type-specific environment variables, groups, and behaviors.
+ * A profile defines the environment variables and their characteristics for a specific project type.
  */
 public interface EnvProfile {
     /**
-     * Get the name of the profile
-     * 
-     * @return The profile name
+     * Gets the name of the profile.
+     *
+     * @return Profile name
      */
     String getProfileName();
     
     /**
-     * Get a description of the profile
-     * 
-     * @return The profile description
+     * Gets a description of the profile.
+     *
+     * @return Profile description
      */
     String getProfileDescription();
     
     /**
-     * Get all environment variable definitions in this profile
-     * 
-     * @return Map of variable names to their definitions
+     * Gets all environment variable definitions for this profile.
+     *
+     * @return Map of variable name to definition
      */
     Map<String, EnvVariableDefinition> getDefinitions();
     
     /**
-     * Get a specific environment variable definition by name
-     * 
+     * Gets the definition for a specific environment variable.
+     *
      * @param name Name of the environment variable
-     * @return The variable definition, or null if not found
+     * @return Definition of the variable, or null if not found
      */
     EnvVariableDefinition getDefinition(String name);
     
     /**
-     * Get all variable definitions for a specific group
-     * 
-     * @param group The group name
-     * @return List of variable definitions for the group
+     * Gets all environment variable definitions for a specific group.
+     *
+     * @param group Group name
+     * @return List of definitions in the group
      */
     List<EnvVariableDefinition> getDefinitionsForGroup(String group);
     
     /**
-     * Get all available group names
-     * 
+     * Gets all group names defined in this profile.
+     *
      * @return Set of group names
      */
     Set<String> getAllGroups();
     
     /**
-     * Check if a variable name is predefined in this profile
-     * 
-     * @param name Name of the environment variable
-     * @return true if the variable is predefined
+     * Checks if an environment variable is predefined in this profile.
+     *
+     * @param name Name of the variable to check
+     * @return true if the variable is predefined, false otherwise
      */
     boolean isVariablePredefined(String name);
     
     /**
-     * Check if this profile supports Artisan commands (Laravel-specific)
-     * 
-     * @return true if Artisan commands are supported
+     * Checks if this profile supports Artisan commands (for Laravel projects).
+     *
+     * @return true if Artisan commands are supported, false otherwise
      */
     boolean supportsArtisanCommands();
-    
+
     /**
      * Get common environment file names for this profile
-     * 
+     *
      * @return Array of common file names (e.g., .env, .env.example)
      */
     String[] getCommonEnvFiles();
+
+    /**
+     * Get environment file definitions for this profile.
+     * This method returns a list of environment file definitions with detailed information
+     * about each file's purpose, editability, and priority.
+     *
+     * @return List of environment file definitions
+     */
+    List<EnvFileDefinition> getEnvFileDefinitions();
 }

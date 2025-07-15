@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
 import java.util.*;
@@ -125,7 +126,37 @@ public class NodeJSProfile implements EnvProfile {
     public String[] getCommonEnvFiles() {
         return new String[] {".env", ".env.local", ".env.development", ".env.production", ".env.test"};
     }
-    
+
+
+    @Override
+    public List<EnvFileDefinition> getEnvFileDefinitions() {
+        List<EnvFileDefinition> definitions = new ArrayList<>();
+        
+        // Primary .env file
+        definitions.add(EnvFileDefinition.createPrimaryEnv());
+        
+        // Local overrides (highest priority for Node.js)
+        EnvFileDefinition localEnv = EnvFileDefinition.createLocalEnv();
+        definitions.add(localEnv);
+        
+        // Environment-specific files
+        definitions.add(EnvFileDefinition.createDevelopmentEnv());
+        definitions.add(EnvFileDefinition.createProductionEnv());
+        
+        // Testing environment
+        EnvFileDefinition testEnv = new EnvFileDefinition(
+                ".env.test",
+                "Environment variables for testing",
+                false,
+                true,
+                5,
+                EnvFileDefinition.EnvFileType.TESTING
+        );
+        definitions.add(testEnv);
+        
+        return definitions;
+    }
+
     /**
      * Registers a predefined environment variable in the registry.
      *
