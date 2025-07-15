@@ -1,7 +1,7 @@
 package com.ringlesoft.visualenv.toolWindow;
 
+import com.intellij.openapi.actionSystem.ActionStub;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBLabel;
@@ -10,21 +10,19 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.profile.EnvProfile;
-import com.ringlesoft.visualenv.profile.ProfileManager;
 import com.ringlesoft.visualenv.services.EnvVariableService;
-import com.ringlesoft.visualenv.utils.ProjectDetector;
+import com.ringlesoft.visualenv.services.ProjectService;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.util.HashMap;
 import java.util.Map;
 
 public class VisualEnvToolWindowFactory implements ToolWindowFactory {
 
     private Project project;
     private EnvVariableService envService;
+    private ProjectService projectService;
     private JTextField filterField;
     private JComboBox<String> envFileSelector;
     private JComboBox<String> profileSelector;
@@ -102,7 +100,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
      */
     private void updateUI() {
         // Update project type label
-        String projectType = ProjectDetector.getProjectType(project);
+        String projectType = projectService.getProjectType();
         projectTypeLabel.setText("Project type: " + projectType);
         
         // Update button visibility based on profile
@@ -130,10 +128,10 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory {
         
         // Add CLI Commands tab if supported
         // This tab is currently Disabled
-        if (envService.getActiveProfile().supportsArtisanCommands()) {
-            JPanel artisanPanel = createCliActionsPanel();
-            tabbedPane.addTab("CLI Commands", artisanPanel);
-        }
+//        if (envService.getActiveProfile().supportsArtisanCommands()) {
+//            JPanel artisanPanel = createCliActionsPanel();
+//            tabbedPane.addTab("CLI Commands", artisanPanel);
+//        }
 
         // Refresh UI
         mainPanel.revalidate();

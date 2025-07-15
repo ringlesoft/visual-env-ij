@@ -11,6 +11,7 @@ import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.ProjectService;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +35,17 @@ public class ProjectStartupActivity implements ProjectActivity {
     @Override
     public Object execute(@NotNull Project project, @NotNull Continuation<? super Unit> continuation) {
         try {
+            initializeProject(project);
             checkAndProcessEnvFiles(project);
         } catch (Exception e) {
             LOG.error("Error in ProjectStartupActivity", e);
         }
         return Unit.INSTANCE;
+    }
+
+    private void initializeProject(@NotNull Project project) {
+        ProjectService projectService = project.getService(ProjectService.class);
+        projectService.initialize();
     }
 
     /**
@@ -77,8 +84,8 @@ public class ProjectStartupActivity implements ProjectActivity {
      */
     private void showCreateEnvFileNotification(@NotNull Project project, @NotNull VirtualFile envExampleFile) {
         Notification notification = new Notification(
-                "VisualEnv",
-                "Environment File Missing",
+                "Visual Env Notification Group",
+                "Environment file missing",
                 "No .env file found, but .env.example exists. Would you like to create a .env file from the example?",
                 NotificationType.INFORMATION
         );
@@ -92,8 +99,8 @@ public class ProjectStartupActivity implements ProjectActivity {
                 } catch (IOException ex) {
                     LOG.error("Failed to create .env file", ex);
                     Notifications.Bus.notify(new Notification(
-                            "VisualEnv",
-                            "Error Creating .env File",
+                            "Visual Env Notification Group",
+                            "Error creating .env file",
                             "Failed to create .env file: " + ex.getMessage(),
                             NotificationType.ERROR
                     ), project);
@@ -132,8 +139,8 @@ public class ProjectStartupActivity implements ProjectActivity {
             
             // Show success notification
             Notifications.Bus.notify(new Notification(
-                    "VisualEnv",
-                    "Environment File Created",
+                    "Visual Env Notification Group",
+                    "Environment file created",
                     ".env file has been created from .env.example",
                     NotificationType.INFORMATION
             ), project);

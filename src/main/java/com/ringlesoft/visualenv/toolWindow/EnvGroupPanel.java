@@ -81,8 +81,7 @@ public class EnvGroupPanel extends JPanel {
         variablesPanel.setBorder(VisualEnvTheme.VARIABLES_PANEL_BORDER);
         
         // Add each variable control
-        for (int i = 0; i < variables.size(); i++) {
-            EnvVariable variable = variables.get(i);
+        for (EnvVariable variable : variables) {
             JPanel varPanel = createControlForVariable(variable);
             variablesPanel.add(varPanel);
         }

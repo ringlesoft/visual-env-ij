@@ -28,6 +28,7 @@ public final class EnvVariableService {
     private VirtualFile activeEnvFile;
     private EnvProfile activeProfile;
 
+
     /**
      * Create a new EnvVariableService for a project
      *
