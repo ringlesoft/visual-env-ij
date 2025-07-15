@@ -1,6 +1,7 @@
 package com.ringlesoft.visualenv.profile;
 
 import com.ringlesoft.visualenv.model.CliActionDefinition;
+import com.ringlesoft.visualenv.model.CliParameterDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 

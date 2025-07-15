@@ -1,6 +1,7 @@
 package com.ringlesoft.visualenv.profile;
 
 import com.ringlesoft.visualenv.model.CliActionDefinition;
+import com.ringlesoft.visualenv.model.CliParameterDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -450,9 +451,33 @@ public class LaravelProfile implements EnvProfile {
         return definitions;
     }
 
+
     @Override
     public List<CliActionDefinition> getAvailableCliActions() {
-        return List.of();
+
+        CliActionDefinition[] definitions = {
+            new CliActionDefinition(
+                "artisan_key_generate",
+                "Generate Application Key",
+                "php artisan key:generate",
+                "Generate a new application key and store it in the .env file"
+            ).addEnvironmentVariable("ENV_FILE", "{selectedEnvFile}"),
+
+            new CliActionDefinition(
+                "artisan_env_encrypt",
+                "Encrypt Environment File",
+                "php artisan env:encrypt",
+                "Encrypts an environment file variable using the Laravel framework"
+            ).addParameter(
+                new CliParameterDefinition(
+                    "name",
+                    "Variable Name",
+                    "Name of the environment variable to retrieve",
+                    true
+                )
+            ),
+        };
+        return Arrays.asList(definitions);
     }
 
     @Override

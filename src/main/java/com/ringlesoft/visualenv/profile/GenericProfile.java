@@ -1,6 +1,7 @@
 package com.ringlesoft.visualenv.profile;
 
 import com.ringlesoft.visualenv.model.CliActionDefinition;
+import com.ringlesoft.visualenv.model.CliParameterDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -114,14 +115,57 @@ public class GenericProfile implements EnvProfile {
 
     @Override
     public List<CliActionDefinition> getAvailableCliActions() {
-        return List.of();
+        return List.of( );
     }
-
-    @Override
-    public boolean supportsTemplateFiles() {
-        return false;
+    
+    /**
+     * Get the appropriate environment variable listing command for the current OS
+     */
+    private String getOsSpecificEnvListCommand() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("win")) {
+            return "set";
+        } else {
+            return "env";
+        }
     }
-
+    
+    /**
+     * Get the appropriate environment variable get command for the current OS
+     */
+    private String getOsSpecificEnvGetCommand() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("win")) {
+            return "echo %{name}%";
+        } else {
+            return "echo $${name}";
+        }
+    }
+    
+    /**
+     * Get the appropriate file view command for the current OS
+     */
+    private String getOsSpecificFileViewCommand() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("win")) {
+            return "type \"%ENV_FILE_PATH%\"";
+        } else {
+            return "cat \"$ENV_FILE_PATH\"";
+        }
+    }
+    
+    /**
+     * Get the appropriate file grep command for the current OS
+     */
+    private String getOsSpecificFileGrepCommand() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("win")) {
+            return "findstr \"{search}\" \"%ENV_FILE_PATH%\"";
+        } else {
+            return "grep \"{search}\" \"$ENV_FILE_PATH\"";
+        }
+    }
+    
     /**
      * Registers a predefined environment variable in the registry.
      *
@@ -135,5 +179,10 @@ public class GenericProfile implements EnvProfile {
     private static void register(String name, String description, List<String> possibleValues,
                                EnvVariableDefinition.VariableType type, String group, boolean secret) {
         REGISTRY.put(name, new EnvVariableDefinition(name, description, possibleValues, type, group, secret));
+    }
+    
+    @Override
+    public boolean supportsTemplateFiles() {
+        return false;
     }
 }
