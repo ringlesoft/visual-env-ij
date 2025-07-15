@@ -10,6 +10,7 @@ import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
+import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -117,32 +118,14 @@ public final class EnvVariableService {
         }
         
         try {
-            // Read the file content
-            String content = new String(activeEnvFile.contentsToByteArray(), StandardCharsets.UTF_8);
-            String updatedContent;
-            
-            // Check if the variable exists in the file
-            Pattern pattern = Pattern.compile("^" + Pattern.quote(name) + "=.*$", Pattern.MULTILINE);
-            Matcher matcher = pattern.matcher(content);
-            
-            if (matcher.find()) {
-                // Update existing variable
-                updatedContent = matcher.replaceFirst(name + "=" + value);
-            } else {
-                // Add new variable
-                updatedContent = content + (content.endsWith("\n") ? "" : "\n") + name + "=" + value + "\n";
-            }
-            
-            // Write the content back to the file
-            try (OutputStream outputStream = activeEnvFile.getOutputStream(this)) {
-                outputStream.write(updatedContent.getBytes(StandardCharsets.UTF_8));
-            }
+            // Use EnvFileManager to update the variable
+            EnvFileManager.setEnvVariable(project, activeEnvFile, name, value);
             
             // Update cache
             parseEnvFile(activeEnvFile);
             
             return true;
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error("Failed to update env variable", e);
             return false;
         }
