@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.CliActionDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -109,6 +110,11 @@ public class GenericProfile implements EnvProfile {
         definitions.add(EnvFileDefinition.createLocalEnv());
         
         return definitions;
+    }
+
+    @Override
+    public List<CliActionDefinition> getAvailableCliActions() {
+        return List.of();
     }
 
     @Override

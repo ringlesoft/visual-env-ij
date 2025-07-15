@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.CliActionDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -86,6 +87,12 @@ public interface EnvProfile {
      * @return List of environment file definitions
      */
     List<EnvFileDefinition> getEnvFileDefinitions();
+
+    /**
+     * Get a list of available CLI actions for this profile.
+     * @return List of available CLI actions
+     */
+    List<CliActionDefinition> getAvailableCliActions(); // TODO: Move to EnvFileDefinition>
 
     boolean supportsTemplateFiles();
 }

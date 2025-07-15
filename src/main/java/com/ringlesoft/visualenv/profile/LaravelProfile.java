@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.CliActionDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -22,6 +23,7 @@ public class LaravelProfile implements EnvProfile {
     public static final String GROUP_MAIL = "mail";
     public static final String GROUP_PUSHER = "pusher";
     public static final String GROUP_AWS = "aws";
+    public static final String GROUP_REDIS = "redis";
     public static final String GROUP_VITE_PUSHER = "vite_pusher";
 
     private static final Map<String, EnvVariableDefinition> REGISTRY = new HashMap<>();
@@ -446,6 +448,11 @@ public class LaravelProfile implements EnvProfile {
         definitions.add(EnvFileDefinition.createProductionEnv());
         
         return definitions;
+    }
+
+    @Override
+    public List<CliActionDefinition> getAvailableCliActions() {
+        return List.of();
     }
 
     @Override

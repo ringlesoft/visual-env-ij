@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.profile;
 
+import com.ringlesoft.visualenv.model.CliActionDefinition;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 
@@ -155,6 +156,11 @@ public class NodeJSProfile implements EnvProfile {
         definitions.add(testEnv);
         
         return definitions;
+    }
+
+    @Override
+    public List<CliActionDefinition> getAvailableCliActions() {
+        return List.of();
     }
 
     @Override
