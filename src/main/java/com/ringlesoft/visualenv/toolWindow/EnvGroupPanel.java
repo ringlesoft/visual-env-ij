@@ -1,5 +1,6 @@
 package com.ringlesoft.visualenv.toolWindow;
 
+import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
@@ -15,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static org.codehaus.plexus.util.StringUtils.capitalizeFirstLetter;
 
 /**
  * Panel that displays environment variables grouped by category
@@ -54,12 +57,22 @@ public class EnvGroupPanel extends JPanel {
         // Add expand/collapse icon
         JLabel expandIcon = new JLabel("-");
         expandIcon.setPreferredSize(new Dimension(20, 20));
+        expandIcon.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         headerPanel.add(expandIcon, BorderLayout.WEST);
         
         // Group name and count
-        titleLabel = new JLabel(groupName + " (" + variables.size() + ")");
+        titleLabel = new JLabel(capitalizeFirstLetter(groupName));
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
+        titleLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
+
+        // Add count badge to the right
+        JLabel countBadge = new JLabel(String.valueOf(variables.size()) + " ");
+        countBadge.setForeground(VisualEnvTheme.TEXT_SECONDARY);
+        // reduce font size by 1
+        countBadge.setFont(countBadge.getFont().deriveFont(Font.PLAIN, countBadge.getFont().getSize() - 2));;
+        countBadge.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+        headerPanel.add(countBadge, BorderLayout.EAST);
         
         // Make the header clickable for expand/collapse
         headerPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -95,7 +108,7 @@ public class EnvGroupPanel extends JPanel {
         
         // Create variable name label
         JLabel nameLabel = new JLabel(variable.getName() + ":");
-        nameLabel.setFont(nameLabel.getFont().deriveFont(Font.BOLD));
+        nameLabel.setFont(nameLabel.getFont().deriveFont(Font.PLAIN, nameLabel.getFont().getSize() - 1));
         nameLabel.setBorder(VisualEnvTheme.VARIABLE_NAME_BORDER);
         nameLabel.setToolTipText(getDescriptionForVariable(variable));
         panel.add(nameLabel, BorderLayout.WEST);

@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
+import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -71,6 +72,8 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
      */
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+        // set minimum width to 500
+        panel.setMinimumSize(new Dimension(500, 0));
         panel.setBorder(JBUI.Borders.empty(5));
         
         JPanel topPanel = new JPanel(new GridLayout(1, 1, 0, 5));
@@ -81,6 +84,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         // Add project type detection label
         String profileName = envService.getActiveProfile().getProfileName();
         projectTypeLabel = new JBLabel("Profile: " + profileName);
+        projectTypeLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         projectTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
         projectTypePanel.add(projectTypeLabel, BorderLayout.WEST);
         

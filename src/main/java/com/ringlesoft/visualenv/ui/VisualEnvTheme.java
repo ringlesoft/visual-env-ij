@@ -43,15 +43,15 @@ public class VisualEnvTheme {
     public static final JBColor BORDER_LIGHT = new JBColor(new Color(230, 230, 230), new Color(60, 60, 60));
     
     // Common borders
-    public static Border PANEL_BORDER = BorderFactory.createLineBorder(BORDER);
+    public static Border PANEL_BORDER = BorderFactory.createLineBorder(BORDER_LIGHT);
     public static Border PANEL_BORDER_WITH_PADDING = new CompoundBorder(
-            BorderFactory.createLineBorder(BORDER),
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_LIGHT),
             JBUI.Borders.empty(5)
     );
     
     // Group panel borders
     public static Border GROUP_HEADER_BORDER = BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER),
+            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_LIGHT),
             JBUI.Borders.empty(5)
     );
     public static Border VARIABLES_PANEL_BORDER = JBUI.Borders.empty(10, 20, 5, 5);

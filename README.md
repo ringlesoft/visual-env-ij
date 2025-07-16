@@ -75,13 +75,14 @@ This plugin makes it easy to see which environment variables are in use, edit th
 - Integrated artisan commands for environment management
 - Automatic Laravel project detection
 
-### Coming Soon
-- Node.js/npm projects
-- Django projects
-- Spring Boot applications
+### Node.js/npm 
+- Full support for Node.js/npm projects with types
+
+### Django
+- Full support for Django projects with types
 
 ## Requirements
-- IntelliJ Platform IDEs build 223+
+- IntelliJ Platform IDEs build 224+
 - Project must use environment variables in standard formats (`.env` files)
 
 ## Contributing
