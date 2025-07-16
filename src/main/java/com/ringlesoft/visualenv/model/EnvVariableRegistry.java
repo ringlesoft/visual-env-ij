@@ -1,456 +1,164 @@
 package com.ringlesoft.visualenv.model;
 
+import com.intellij.openapi.project.Project;
+import com.ringlesoft.visualenv.profile.EnvProfile;
+import com.ringlesoft.visualenv.profile.GenericProfile;
+
 import java.util.*;
 
 /**
- * Registry containing predefined environment variables with their descriptions, possible values, and groups.
- * Based on common Laravel environment variables.
+ * Registry for environment variables that adapts to the currently selected profile.
+ * Delegates to the active profile to get variable definitions, groups, and other metadata.
  */
 public class EnvVariableRegistry {
-    private static final Map<String, EnvVariableDefinition> REGISTRY = new HashMap<>();
+    private EnvProfile activeProfile;
+    private Project project;
 
-    // Groups
-    public static final String GROUP_APP = "app";
-    public static final String GROUP_DATABASE = "database";
-    public static final String GROUP_LOGGING = "logging";
-    public static final String GROUP_BROADCAST = "broadcast";
-    public static final String GROUP_CACHE = "cache";
-    public static final String GROUP_QUEUE = "queue";
-    public static final String GROUP_SESSION = "session";
-    public static final String GROUP_MAIL = "mail";
-    public static final String GROUP_PUSHER = "pusher";
-    public static final String GROUP_AWS = "aws";
-    public static final String GROUP_VITE_PUSHER = "vite_pusher";
-
-    static {
-        // App variables
-        register(
-                "APP_NAME",
-                "The name of your application",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_APP,
-                false
-        );
-
-        register(
-                "APP_ENV",
-                "The application environment",
-                Arrays.asList("local", "production", "staging", "testing"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_APP,
-                false
-        );
-
-        register(
-                "APP_KEY",
-                "Application encryption key used for encryption and sessions",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_APP,
-                true
-        );
-
-        register(
-                "APP_DEBUG",
-                "Enables debug mode for detailed error messages",
-                Arrays.asList("true", "false"),
-                EnvVariableDefinition.VariableType.BOOLEAN,
-                GROUP_APP,
-                false
-        );
-
-        register(
-                "APP_URL",
-                "The URL of your application",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_APP,
-                false
-        );
-
-        // Logging variables
-        register(
-                "LOG_CHANNEL",
-                "Specifies the default logging channel",
-                Arrays.asList("stack", "single", "daily", "slack"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_LOGGING,
-                false
-        );
-
-        register(
-                "LOG_LEVEL",
-                "Minimum log level to record",
-                Arrays.asList("debug", "info", "notice", "warning", "error", "critical", "alert", "emergency"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_LOGGING,
-                false
-        );
-
-        // Database variables
-        register(
-                "DB_CONNECTION",
-                "Database connection driver",
-                Arrays.asList("mysql", "pgsql", "sqlite", "sqlsrv"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_DATABASE,
-                false
-        );
-
-        register(
-                "DB_HOST",
-                "Database server host",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_DATABASE,
-                false
-        );
-
-        register(
-                "DB_PORT",
-                "Database server port",
-                null,
-                EnvVariableDefinition.VariableType.INTEGER,
-                GROUP_DATABASE,
-                false
-        );
-
-        register(
-                "DB_DATABASE",
-                "Name of the database",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_DATABASE,
-                false
-        );
-
-        register(
-                "DB_USERNAME",
-                "Database username",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_DATABASE,
-                false
-        );
-
-        register(
-                "DB_PASSWORD",
-                "Database password",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_DATABASE,
-                true
-        );
-
-        // Broadcast, Cache, Queue variables
-        register(
-                "BROADCAST_DRIVER",
-                "Broadcast driver for real-time events",
-                Arrays.asList("pusher", "redis", "log", "null"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_BROADCAST,
-                false
-        );
-
-        register(
-                "CACHE_DRIVER",
-                "Cache system used by the application",
-                Arrays.asList("file", "database", "redis", "memcached", "array"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_CACHE,
-                false
-        );
-
-        register(
-                "QUEUE_CONNECTION",
-                "Queue backend connection name",
-                Arrays.asList("sync", "database", "redis", "sqs"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_QUEUE,
-                false
-        );
-
-        // Session variables
-        register(
-                "SESSION_DRIVER",
-                "Session storage mechanism",
-                Arrays.asList("file", "cookie", "database", "redis", "array"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_SESSION,
-                false
-        );
-
-        register(
-                "SESSION_LIFETIME",
-                "Number of minutes that sessions are allowed to remain idle",
-                null,
-                EnvVariableDefinition.VariableType.INTEGER,
-                GROUP_SESSION,
-                false
-        );
-
-        // Mail variables
-        register(
-                "MAIL_MAILER",
-                "Mail sending driver",
-                Arrays.asList("smtp", "sendmail", "mailgun", "ses", "postmark", "log", "array"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_HOST",
-                "SMTP server hostname",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_PORT",
-                "SMTP server port",
-                null,
-                EnvVariableDefinition.VariableType.INTEGER,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_USERNAME",
-                "SMTP username",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_PASSWORD",
-                "SMTP password",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_MAIL,
-                true
-        );
-
-        register(
-                "MAIL_ENCRYPTION",
-                "Encryption protocol for mail",
-                Arrays.asList("ssl", "tls", ""),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_FROM_ADDRESS",
-                "Email address used as sender",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_MAIL,
-                false
-        );
-
-        register(
-                "MAIL_FROM_NAME",
-                "Sender name for emails",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_MAIL,
-                false
-        );
-
-        // Pusher variables
-        register(
-                "PUSHER_APP_ID",
-                "Pusher app ID for broadcasting",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_PUSHER,
-                false
-        );
-
-        register(
-                "PUSHER_APP_KEY",
-                "Pusher app key",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_PUSHER,
-                false
-        );
-
-        register(
-                "PUSHER_APP_SECRET",
-                "Pusher app secret",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_PUSHER,
-                true
-        );
-
-        register(
-                "PUSHER_APP_CLUSTER",
-                "Pusher cluster location",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_PUSHER,
-                false
-        );
-
-        // AWS variables
-        register(
-                "AWS_ACCESS_KEY_ID",
-                "AWS access key",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_AWS,
-                false
-        );
-
-        register(
-                "AWS_SECRET_ACCESS_KEY",
-                "AWS secret key",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_AWS,
-                true
-        );
-
-        register(
-                "AWS_DEFAULT_REGION",
-                "AWS region",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_AWS,
-                false
-        );
-
-        register(
-                "AWS_BUCKET",
-                "S3 bucket name",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_AWS,
-                false
-        );
-
-        // Vite Pusher variables
-        register(
-                "VITE_PUSHER_APP_KEY",
-                "For frontend tooling with Vite using Pusher",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_VITE_PUSHER,
-                true
-        );
-
-        register(
-                "VITE_PUSHER_HOST",
-                "Host for Pusher, often localhost or remote",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_VITE_PUSHER,
-                false
-        );
-
-        register(
-                "VITE_PUSHER_PORT",
-                "Port for Pusher",
-                null,
-                EnvVariableDefinition.VariableType.INTEGER,
-                GROUP_VITE_PUSHER,
-                false
-        );
-
-        register(
-                "VITE_PUSHER_SCHEME",
-                "Connection scheme",
-                Arrays.asList("http", "https"),
-                EnvVariableDefinition.VariableType.DROPDOWN,
-                GROUP_VITE_PUSHER,
-                false
-        );
-
-        register(
-                "VITE_PUSHER_APP_CLUSTER",
-                "Pusher cluster, e.g., 'mt1'",
-                null,
-                EnvVariableDefinition.VariableType.STRING,
-                GROUP_VITE_PUSHER,
-                false
-        );
+    /**
+     * Creates a new EnvVariableRegistry with a default generic profile.
+     */
+    public EnvVariableRegistry() {
+        this.activeProfile = new GenericProfile();
     }
-
-    private static void register(String name, String description, List<String> possibleValues,
-                                 EnvVariableDefinition.VariableType type, String group, boolean isSecret) {
-
-        EnvVariableDefinition definition = new EnvVariableDefinition(name, description, possibleValues, type, group, isSecret);
-        REGISTRY.put(name, definition);
+    
+    /**
+     * Creates a new EnvVariableRegistry with the specified profile.
+     * 
+     * @param profile The profile to use for variable definitions
+     */
+    public EnvVariableRegistry(EnvProfile profile) {
+        this.activeProfile = profile != null ? profile : new GenericProfile();
+    }
+    
+    /**
+     * Creates a new EnvVariableRegistry with the specified profile and project.
+     * 
+     * @param profile The profile to use for variable definitions
+     * @param project The current project
+     */
+    public EnvVariableRegistry(EnvProfile profile, Project project) {
+        this.activeProfile = profile != null ? profile : new GenericProfile();
+        this.project = project;
     }
 
     /**
-     * Gets a predefined environment variable definition by name.
-     *
+     * Gets all registered environment variables.
+     * 
+     * @return Map of variable name to variable definition
+     */
+    public Map<String, EnvVariableDefinition> getRegisteredVariables() {
+        return activeProfile.getDefinitions();
+    }
+
+    /**
+     * Gets the definition for a specific environment variable.
+     * 
      * @param name Name of the environment variable
-     * @return The variable definition, or null if not found
+     * @return Definition of the variable, or null if not registered
      */
-    public static EnvVariableDefinition getDefinition(String name) {
-        // TODO: Find a way to automatically register unknown variables
-        return REGISTRY.get(name);
+    public EnvVariableDefinition getVariableDefinition(String name) {
+        return activeProfile.getDefinition(name);
     }
-
+    
     /**
-     * Gets all predefined environment variable definitions.
-     *
-     * @return Map of variable names to definitions
+     * Gets the group for a specific environment variable.
+     * 
+     * @param name Name of the environment variable
+     * @return Group of the variable, or "other" if not registered
      */
-    public static Map<String, EnvVariableDefinition> getAllDefinitions() {
-        return Collections.unmodifiableMap(REGISTRY);
+    public String getVariableGroup(String name) {
+        EnvVariableDefinition definition = activeProfile.getDefinition(name);
+        return definition != null ? definition.getGroup() : "other";
     }
-
+    
     /**
-     * Gets all predefined environment variable definitions for a specific group.
-     *
-     * @param group The group name
-     * @return List of variable definitions for the group
+     * Gets all variables for a specific group.
+     * 
+     * @param group Group name
+     * @return List of variable definitions in the group
      */
-    public static List<EnvVariableDefinition> getDefinitionsForGroup(String group) {
-        List<EnvVariableDefinition> result = new ArrayList<>();
-
-        for (EnvVariableDefinition definition : REGISTRY.values()) {
-            if (group.equals(definition.getGroup())) {
-                result.add(definition);
-            }
-        }
-
-        return result;
+    public List<EnvVariableDefinition> getVariablesForGroup(String group) {
+        return activeProfile.getDefinitionsForGroup(group);
     }
-
+    
     /**
-     * Gets all available group names.
-     *
+     * Gets all available variable groups.
+     * 
      * @return Set of group names
      */
-    public static Set<String> getAllGroups() {
-        Set<String> groups = new HashSet<>();
-
-        for (EnvVariableDefinition definition : REGISTRY.values()) {
-            groups.add(definition.getGroup());
-        }
-
-        return Collections.unmodifiableSet(groups);
+    public Set<String> getAllGroups() {
+        return activeProfile.getAllGroups();
     }
-
+    
     /**
-     * Checks if a variable name is predefined.
-     *
+     * Checks if a variable name should be treated as a secret.
+     * Uses naming patterns to detect sensitive information.
+     * 
      * @param name Name of the environment variable
+     * @return true if the variable should be treated as a secret
+     */
+    public boolean detectSecretVariable(String name) {
+        // First check if it's defined in the profile
+        EnvVariableDefinition definition = activeProfile.getDefinition(name);
+        if (definition != null) {
+            return definition.isSecret();
+        }
+        
+        // Otherwise use heuristics
+        String upperName = name.toUpperCase();
+        return upperName.contains("KEY") ||
+               upperName.contains("SECRET") ||
+               upperName.contains("PASSWORD") ||
+               upperName.contains("TOKEN") ||
+               upperName.contains("SIGNATURE") ||
+               upperName.contains("CERT");
+    }
+    
+    /**
+     * Sets the active profile for this registry.
+     * 
+     * @param profile Profile to use
+     */
+    public void setActiveProfile(EnvProfile profile) {
+        if (profile != null) {
+            this.activeProfile = profile;
+        }
+    }
+    
+    /**
+     * Gets the active profile.
+     * 
+     * @return The current active profile
+     */
+    public EnvProfile getActiveProfile() {
+        return activeProfile;
+    }
+    
+    /**
+     * Checks if a variable is predefined in the active profile.
+     * 
+     * @param name Variable name
      * @return true if the variable is predefined
      */
-    public static boolean isPredefined(String name) {
-        return REGISTRY.containsKey(name);
+    public boolean isVariablePredefined(String name) {
+        return activeProfile.isVariablePredefined(name);
+    }
+    
+    /**
+     * Gets the project associated with this registry.
+     * 
+     * @return The project
+     */
+    public Project getProject() {
+        return project;
+    }
+    
+    /**
+     * Sets the project associated with this registry.
+     * 
+     * @param project The project
+     */
+    public void setProject(Project project) {
+        this.project = project;
     }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
+import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
@@ -28,7 +29,7 @@ public final class EnvVariableService {
     private final Map<VirtualFile, List<EnvVariable>> fileEnvVariables = new HashMap<>();
     private VirtualFile activeEnvFile;
     private EnvProfile activeProfile;
-
+    private EnvVariableRegistry variableRegistry;
 
     /**
      * Create a new EnvVariableService for a project
@@ -39,6 +40,7 @@ public final class EnvVariableService {
         this.project = project;
         // Initialize the active profile based on project type
         this.activeProfile = ProfileManager.getProfileForProject(project);
+        this.variableRegistry = new EnvVariableRegistry(this.activeProfile, project);
         LOG.info("EnvVariableService initialized with profile: " + activeProfile.getProfileName());
     }
 
@@ -77,17 +79,13 @@ public final class EnvVariableService {
                     }
                     
                     // Check if this is a predefined variable
-                    EnvVariableDefinition definition = activeProfile.getDefinition(name);
+                    EnvVariableDefinition definition = variableRegistry.getVariableDefinition(name);
                     
                     // Determine group
                     String group = (definition != null) ? definition.getGroup() : "other";
                     
                     // Determine if secret
-                    boolean isSecret = (definition != null) ? definition.isSecret() : 
-                            name.toLowerCase().contains("key") || 
-                            name.toLowerCase().contains("secret") || 
-                            name.toLowerCase().contains("password") ||
-                            name.toLowerCase().contains("token");
+                    boolean isSecret = (definition != null) ? definition.isSecret() : variableRegistry.detectSecretVariable(name);
                     
                     EnvVariable variable = new EnvVariable(name, value, file.getPath(), isSecret, group);
                     variables.add(variable);
@@ -202,7 +200,7 @@ public final class EnvVariableService {
                     }
                     
                     // Check if this is a value that should be randomized
-                    EnvVariableDefinition definition = activeProfile.getDefinition(key);
+                    EnvVariableDefinition definition = variableRegistry.getVariableDefinition(key);
                     if (definition != null && definition.isSecret()) {
                         // Generate a random string for secret values
                         value = generateRandomString(32);
@@ -427,18 +425,28 @@ public final class EnvVariableService {
     }
     
     /**
-     * Set the active profile
+     * Sets the active profile for this service.
+     * This will update the variable registry to use the new profile.
      * 
      * @param profile The profile to set as active
      */
     public void setActiveProfile(EnvProfile profile) {
-        this.activeProfile = profile;
-        LOG.info("Active profile changed to: " + profile.getProfileName());
-        
-        // Re-parse active env file with new profile if there is one
-        if (activeEnvFile != null) {
-            parseEnvFile(activeEnvFile);
+        if (profile != null) {
+            this.activeProfile = profile;
+            this.variableRegistry.setActiveProfile(profile);
+            // Refresh variables to reflect new profile settings
+            refreshVariables();
+            LOG.info("Switched to profile: " + profile.getProfileName());
         }
+    }
+
+    /**
+     * Get the variable registry for this service.
+     * 
+     * @return The variable registry
+     */
+    public EnvVariableRegistry getVariableRegistry() {
+        return variableRegistry;
     }
 
     /**
@@ -621,5 +629,12 @@ public final class EnvVariableService {
 
     public VirtualFile findFileByPath(String selectedFilePath) {
         return LocalFileSystem.getInstance().findFileByPath(selectedFilePath);
+    }
+    
+    private void refreshVariables() {
+        // Refresh variables to reflect new profile settings
+        if (activeEnvFile != null) {
+            parseEnvFile(activeEnvFile);
+        }
     }
 }

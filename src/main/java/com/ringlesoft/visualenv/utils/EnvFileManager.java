@@ -402,8 +402,7 @@ public class EnvFileManager {
      * @param createBackup Whether to create a backup before importing
      */
     public static void importFromEnvFile(Project project, VirtualFile targetFile,
-                                         VirtualFile sourceFile, boolean overwriteExisting,
-                                         boolean createBackup) {
+                                         VirtualFile sourceFile, boolean overwriteExisting, boolean createBackup) {
         if (createBackup) {
             backupEnvFile(project, targetFile);
         }
