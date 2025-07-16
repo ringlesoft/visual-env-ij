@@ -52,8 +52,6 @@ public class FileSaveListener {
                 public void beforeDocumentSaving(@NotNull Document document) {
                     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
                     if (file != null && isFileWeCareAbout(file)) {
-                        LOG.debug("Environment file is being saved: " + file.getPath());
-                        // Update your UI here
                         updateUI(file);
                     }
                 }
@@ -115,7 +113,7 @@ public class FileSaveListener {
             // If this is the currently selected file, reload it
             String currentPath = envEditorTab.getSelectedFilePath();
             if (currentPath != null && savedFile.getPath().equals(currentPath)) {
-                envEditorTab.reloadCurrentEnvFile();
+                envEditorTab.updateFromLocalChanges(savedFile);
             } else {
                 // Otherwise, just reload the file in the service's cache
                 envFileService.parseEnvFile(savedFile);

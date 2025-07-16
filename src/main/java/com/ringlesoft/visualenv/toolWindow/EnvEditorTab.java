@@ -369,4 +369,10 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
     public void close() throws Exception {
         fileSaveListener.dispose();
     }
+
+    public void updateFromLocalChanges(VirtualFile savedFile) {
+        if (savedFile != null) {
+            reloadCurrentEnvFile(); // This is expensive for now
+        }
+    }
 }
