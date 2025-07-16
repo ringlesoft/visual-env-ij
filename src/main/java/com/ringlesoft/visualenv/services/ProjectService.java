@@ -1,12 +1,26 @@
 package com.ringlesoft.visualenv.services;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.ringlesoft.visualenv.utils.ProjectDetector;
 import com.ringlesoft.visualenv.VisualEnvBundle;
+import org.jetbrains.annotations.NotNull;
+import com.ringlesoft.visualenv.profile.EnvProfile;
+import com.ringlesoft.visualenv.profile.ProfileManager;
+import com.ringlesoft.visualenv.model.EnvFileDefinition;
 
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Callable;
 
 /**
  * Project service for Visual Env plugin.
@@ -33,7 +47,12 @@ public final class ProjectService {
     }
 
     public void initialize() {
+        EnvFileService envFileService = project.getService(EnvFileService.class);
         projectType = ProjectDetector.getProjectType(project);
+        EnvProfile activeProfile = ProfileManager.getProfileByName(projectType);
+        envFileService.setActiveProfile(activeProfile);
+        scanAndProcessEnvFiles(project, activeProfile);
+        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
     }
 
     public String getActiveEnvFile() {
@@ -51,5 +70,63 @@ public final class ProjectService {
      */
     public int getRandomNumber() {
         return random.nextInt(100) + 1;
+    }
+
+    /**
+     * Checks for .env files in the project root and creates one from .env.example if needed.
+     *
+     * @param project The current project
+     */
+    private void scanAndProcessEnvFiles(@NotNull Project project, EnvProfile profile) {
+        String basePath = project.getBasePath();
+        if (basePath == null) {
+            return;
+        }
+
+        List<EnvFileDefinition> envFileDefinitions = profile.getEnvFileDefinitions(); // Add null check>
+        List<VirtualFile> foundFiles = new java.util.ArrayList<>();
+
+        for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
+            VirtualFile envFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, envFileDefinition.getName()).toString());
+            if (envFile != null) {
+                // Parse existing .env file but do it safely
+                EnvFileService envFileService = project.getService(EnvFileService.class);
+                if (envFileService != null) {  // Add null check
+                    envFileService.parseEnvFile(envFile);
+                }
+                if (envFileDefinition.isPrimary()) {
+                    setActiveEnvFile(envFileDefinition.getName());
+                }
+                foundFiles.add(envFile);
+            }
+        }
+
+        if (foundFiles.isEmpty()) {
+            // TODO show
+        }
+    }
+
+    /**
+     * Display a notification
+     * @param title Title of the notification
+     * @param content Content of the notification
+     * @param type Type of the notification
+     * @param actions Actions to add to the notification
+     */
+    private void showNotification(String title, String content, NotificationType type, AnAction[] actions) {
+        Notification notification = new Notification(
+                "Visual Env Notification Group",
+                title,
+                content,
+                type
+        );
+        for (AnAction action : actions) {
+            notification.addAction(action);
+        }
+        Notifications.Bus.notify(notification, project);
+    }
+
+    public void showNotification(String title, String content, NotificationType type) {
+        showNotification(title, content, type, new AnAction[0]);
     }
 }

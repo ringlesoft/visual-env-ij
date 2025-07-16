@@ -40,7 +40,6 @@ public class ProjectStartupActivity implements ProjectActivity {
             try {
                 LOG.info("Initializing Visual Env for project: " + project.getName());
                 initializeProject(project);
-                checkAndProcessEnvFiles(project);
             } catch (Exception e) {
                 LOG.error("Error in Visual Env initialization", e);
             }
@@ -56,106 +55,4 @@ public class ProjectStartupActivity implements ProjectActivity {
         }
     }
 
-    /**
-     * Checks for .env files in the project root and creates one from .env.example if needed.
-     *
-     * @param project The current project
-     */
-    private void checkAndProcessEnvFiles(@NotNull Project project) {
-        String basePath = project.getBasePath();
-        if (basePath == null) {
-            return;
-        }
-
-        // Look for .env file
-        VirtualFile envFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, ENV_FILE).toString());
-        
-        // If .env file doesn't exist, look for .env.example
-        if (envFile == null) {
-            VirtualFile envExampleFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, ENV_EXAMPLE_FILE).toString());
-            
-            if (envExampleFile != null && envExampleFile.exists()) {
-                showCreateEnvFileNotification(project, envExampleFile);
-            }
-        } else {
-            // Parse existing .env file but do it safely
-            EnvFileService envFileService = project.getService(EnvFileService.class);
-            if (envFileService != null) {  // Add null check
-                envFileService.parseEnvFile(envFile);
-            }
-        }
-    }
-
-    /**
-     * Shows a notification offering to create a .env file from .env.example.
-     *
-     * @param project The current project
-     * @param envExampleFile The .env.example file
-     */
-    private void showCreateEnvFileNotification(@NotNull Project project, @NotNull VirtualFile envExampleFile) {
-        Notification notification = new Notification(
-                "Visual Env Notification Group",
-                "Environment file missing",
-                "No .env file found, but .env.example exists. Would you like to create a .env file from the example?",
-                NotificationType.INFORMATION
-        );
-
-        notification.addAction(new AnAction("Create .env File") {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e) {
-                try {
-                    createEnvFromExample(project, envExampleFile);
-                    notification.expire();
-                } catch (IOException ex) {
-                    LOG.error("Failed to create .env file", ex);
-                    Notifications.Bus.notify(new Notification(
-                            "Visual Env Notification Group",
-                            "Error creating .env file",
-                            "Failed to create .env file: " + ex.getMessage(),
-                            NotificationType.ERROR
-                    ), project);
-                }
-            }
-        });
-
-        Notifications.Bus.notify(notification, project);
-    }
-
-    /**
-     * Creates a .env file from .env.example.
-     *
-     * @param project The current project
-     * @param envExampleFile The .env.example file
-     * @throws IOException If there's an error creating the file
-     */
-    private void createEnvFromExample(@NotNull Project project, @NotNull VirtualFile envExampleFile) throws IOException {
-        String basePath = project.getBasePath();
-        if (basePath == null) {
-            return;
-        }
-        
-        // Read the contents of .env.example
-        String content = new String(envExampleFile.contentsToByteArray(), StandardCharsets.UTF_8);
-        
-        // Create .env file
-        VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(basePath);
-        if (baseDir != null) {
-            VirtualFile envFile = baseDir.createChildData(this, ENV_FILE);
-            envFile.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
-            
-            // Parse the newly created .env file
-            EnvFileService envFileService = project.getService(EnvFileService.class);
-            if (envFileService != null) {  // Add null check
-                envFileService.parseEnvFile(envFile);
-            }
-            
-            // Show success notification
-            Notifications.Bus.notify(new Notification(
-                    "Visual Env Notification Group",
-                    "Environment file created",
-                    ".env file has been created from .env.example",
-                    NotificationType.INFORMATION
-            ), project);
-        }
-    }
 }

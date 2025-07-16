@@ -120,6 +120,11 @@ public class EnvFileDefinition {
         return isEditable;
     }
 
+    public boolean isPrimary() {
+        return fileType == EnvFileType.PRIMARY;
+    }
+
+
     /**
      * Get the loading priority of this file
      *

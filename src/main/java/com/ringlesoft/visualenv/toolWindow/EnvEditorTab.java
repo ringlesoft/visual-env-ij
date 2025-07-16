@@ -135,6 +135,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
         JButton refreshButton = new JButton();
         refreshButton.setText("↻");
         refreshButton.setToolTipText("Refresh");
+        refreshButton.setPreferredSize(new Dimension(30, 30));
         refreshButton.setForeground(VisualEnvTheme.PRIMARY);
         refreshButton.addActionListener(e -> reloadCurrentEnvFile());
         
