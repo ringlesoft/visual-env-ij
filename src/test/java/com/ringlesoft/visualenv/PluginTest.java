@@ -1,21 +1,8 @@
 package com.ringlesoft.visualenv;
 
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.PsiErrorElementUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.project.Project;
 import com.ringlesoft.visualenv.model.EnvVariable;
-import com.ringlesoft.visualenv.services.EnvVariableService;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Collections;
 
 /**
  * Basic sanity tests for the Visual Env plugin

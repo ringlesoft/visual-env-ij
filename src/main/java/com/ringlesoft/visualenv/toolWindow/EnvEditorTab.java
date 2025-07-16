@@ -10,7 +10,7 @@ import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.listeners.FileSaveListener;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class EnvEditorTab extends JPanel implements AutoCloseable {
     
     private final Project project;
-    private final EnvVariableService envVariableService;
+    private final EnvFileService envFileService;
     private final ProjectService projectService;
 
     private JComboBox<String> envFileSelector;
@@ -47,16 +47,16 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
      * Create a new Environment editor tab
      *
      * @param project    The current project
-     * @param envVariableService The environment variable service
+     * @param envFileService The environment variable service
      */
-    public EnvEditorTab(Project project, EnvVariableService envVariableService, ProjectService projectService) {
+    public EnvEditorTab(Project project, EnvFileService envFileService, ProjectService projectService) {
         this.project = project;
-        this.envVariableService = envVariableService;
+        this.envFileService = envFileService;
         this.projectService = projectService;
 
         //Listeners
         // In your tool window factory or constructor
-        fileSaveListener = new FileSaveListener(project, envVariableService);
+        fileSaveListener = new FileSaveListener(project, envFileService);
         fileSaveListener.setEnvEditorTab(this);
         fileSaveListener.setupListener();
         
@@ -186,8 +186,8 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
         fileBasenameToPath.clear();
         
         // Get common env filenames from the active profile
-        String[] commonEnvFiles = envVariableService.getActiveProfile().getCommonEnvFiles();
-        List<EnvFileDefinition> envFileDefinitions = envVariableService.getActiveProfile().getEnvFileDefinitions();
+        String[] commonEnvFiles = envFileService.getActiveProfile().getCommonEnvFiles();
+        List<EnvFileDefinition> envFileDefinitions = envFileService.getActiveProfile().getEnvFileDefinitions();
         
         // Look for these files in the project root
         for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
@@ -214,7 +214,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
         if (file != null) {
             projectService.setActiveEnvFile(file.getPath());
-            List<EnvVariable> variables = envVariableService.parseEnvFile(file);
+            List<EnvVariable> variables = envFileService.parseEnvFile(file);
             updateVariableGroups(variables);
         }
     }
@@ -235,7 +235,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
             String groupName = entry.getKey();
             List<EnvVariable> groupVars = entry.getValue();
 
-            EnvGroupPanel groupPanel = new EnvGroupPanel(groupName, groupVars, envVariableService, this::updateStatus, this);
+            EnvGroupPanel groupPanel = new EnvGroupPanel(groupName, groupVars, envFileService, this::updateStatus, this);
             groupPanels.put(groupName, groupPanel);
             envVarsPanel.add(groupPanel);
         }

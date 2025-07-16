@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
  * Service for managing environment variables in the project.
  */
 @Service(Service.Level.PROJECT)
-public final class EnvVariableService {
-    private static final Logger LOG = Logger.getInstance(EnvVariableService.class);
+public final class EnvFileService {
+    private static final Logger LOG = Logger.getInstance(EnvFileService.class);
     private final Project project;
     private final Map<VirtualFile, List<EnvVariable>> fileEnvVariables = new HashMap<>();
     private VirtualFile activeEnvFile;
@@ -32,16 +32,16 @@ public final class EnvVariableService {
     private EnvVariableRegistry variableRegistry;
 
     /**
-     * Create a new EnvVariableService for a project
+     * Create a new EnvFileService for a project
      *
      * @param project The project
      */
-    public EnvVariableService(Project project) {
+    public EnvFileService(Project project) {
         this.project = project;
         // Initialize the active profile based on project type
         this.activeProfile = ProfileManager.getProfileForProject(project);
         this.variableRegistry = new EnvVariableRegistry(this.activeProfile, project);
-        LOG.info("EnvVariableService initialized with profile: " + activeProfile.getProfileName());
+        LOG.info("EnvFileService initialized with profile: " + activeProfile.getProfileName());
     }
 
     /**

@@ -2,12 +2,10 @@ package com.ringlesoft.visualenv.toolWindow;
 
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.CliActionDefinition;
 import com.ringlesoft.visualenv.model.CliParameterDefinition;
 import com.ringlesoft.visualenv.profile.EnvProfile;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,7 +17,7 @@ import java.util.List;
  */
 public class CliActionsTab extends JPanel {
     
-    private final EnvVariableService envService;
+    private final EnvFileService envService;
     private final EnvProfile profile;
     private JTextArea resultArea; // Added field for displaying results
     
@@ -29,7 +27,7 @@ public class CliActionsTab extends JPanel {
      * @param envService The environment variable service
      * @param profile The active environment profile
      */
-    public CliActionsTab(EnvVariableService envService, EnvProfile profile) {
+    public CliActionsTab(EnvFileService envService, EnvProfile profile) {
         this.envService = envService;
         this.profile = profile;
         

@@ -1,6 +1,5 @@
 package com.ringlesoft.visualenv.toolWindow;
 
-import com.intellij.openapi.actionSystem.ActionStub;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -9,9 +8,8 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.JBUI;
-import com.ringlesoft.visualenv.listeners.FileSaveListener;
 import com.ringlesoft.visualenv.profile.EnvProfile;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +20,7 @@ import java.util.Map;
 public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoCloseable {
 
     private Project project;
-    private EnvVariableService envService;
+    private EnvFileService envService;
     private ProjectService projectService;
     private JTextField filterField;
     private JComboBox<String> envFileSelector;
@@ -37,7 +35,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         this.project = project;
-        this.envService = project.getService(EnvVariableService.class);
+        this.envService = project.getService(EnvFileService.class);
         this.projectService = project.getService(ProjectService.class);
 
 

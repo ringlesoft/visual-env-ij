@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
@@ -79,9 +79,9 @@ public class ProjectStartupActivity implements ProjectActivity {
             }
         } else {
             // Parse existing .env file but do it safely
-            EnvVariableService envVariableService = project.getService(EnvVariableService.class);
-            if (envVariableService != null) {  // Add null check
-                envVariableService.parseEnvFile(envFile);
+            EnvFileService envFileService = project.getService(EnvFileService.class);
+            if (envFileService != null) {  // Add null check
+                envFileService.parseEnvFile(envFile);
             }
         }
     }
@@ -144,9 +144,9 @@ public class ProjectStartupActivity implements ProjectActivity {
             envFile.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
             
             // Parse the newly created .env file
-            EnvVariableService envVariableService = project.getService(EnvVariableService.class);
-            if (envVariableService != null) {  // Add null check
-                envVariableService.parseEnvFile(envFile);
+            EnvFileService envFileService = project.getService(EnvFileService.class);
+            if (envFileService != null) {  // Add null check
+                envFileService.parseEnvFile(envFile);
             }
             
             // Show success notification

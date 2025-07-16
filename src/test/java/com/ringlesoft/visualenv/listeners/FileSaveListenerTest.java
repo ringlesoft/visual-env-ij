@@ -1,22 +1,10 @@
 package com.ringlesoft.visualenv.listeners;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.util.messages.MessageBusConnection;
-import com.ringlesoft.visualenv.services.EnvVariableService;
-import org.jetbrains.annotations.NotNull;
+import com.ringlesoft.visualenv.services.EnvFileService;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 
@@ -26,14 +14,14 @@ import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 public class FileSaveListenerTest extends BasePlatformTestCase {
     private FileSaveListener fileSaveListener;
     private Project project;
-    private EnvVariableService envVariableService;
+    private EnvFileService envFileService;
     private File tempDir;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         project = getProject();
-        fileSaveListener = new FileSaveListener(project, envVariableService);
+        fileSaveListener = new FileSaveListener(project, envFileService);
         tempDir = createTempDirectory("VisualEnv", "");
     }
 
@@ -102,9 +90,9 @@ public class FileSaveListenerTest extends BasePlatformTestCase {
 //
 //            VirtualFile virtualEnvFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(envFile);
 //
-//            // Get the EnvVariableService
-//            EnvVariableService envService = project.getService(EnvVariableService.class);
-//            assertNotNull("EnvVariableService should be available", envService);
+//            // Get the EnvFileService
+//            EnvFileService envService = project.getService(EnvFileService.class);
+//            assertNotNull("EnvFileService should be available", envService);
 //
 //            // Try to trigger file saved event (this is simplified since we can't easily trigger real events)
 //            try {

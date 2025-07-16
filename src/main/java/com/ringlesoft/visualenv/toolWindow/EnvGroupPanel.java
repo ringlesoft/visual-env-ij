@@ -3,7 +3,7 @@ package com.ringlesoft.visualenv.toolWindow;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 public class EnvGroupPanel extends JPanel {
 
     private List<EnvVariable> variables;
-    private final EnvVariableService envVariableService;
+    private final EnvFileService envFileService;
     private final Consumer<String> statusUpdater;
     private final Map<String, Component> variableComponents = new HashMap<>();
     private final JPanel variablesPanel;
@@ -34,9 +34,9 @@ public class EnvGroupPanel extends JPanel {
     private final Map<String, Timer> debounceTimers = new HashMap<>();
     private static final int DEBOUNCE_DELAY = 500; // milliseconds
 
-    public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvVariableService envVariableService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
+    public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvFileService envFileService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
         this.variables = variables;
-        this.envVariableService = envVariableService;
+        this.envFileService = envFileService;
         this.statusUpdater = statusUpdater;
 
         // Setup panel
@@ -223,7 +223,7 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private void updateVariable(String name, String value) {
-        boolean success = envVariableService.updateEnvVariable(name, value);
+        boolean success = envFileService.updateEnvVariable(name, value);
         if (success) {
             statusUpdater.accept("Updated " + name + " to " + (isSecretVariable(name) ? "*****" : value));
         } else {

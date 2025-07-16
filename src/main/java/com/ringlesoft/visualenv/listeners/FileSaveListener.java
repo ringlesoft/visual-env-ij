@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.toolWindow.EnvEditorTab;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 public class FileSaveListener {
     private static final Logger LOG = Logger.getInstance(FileSaveListener.class);
     private final Project project;
-    private final EnvVariableService envVariableService;
+    private final EnvFileService envFileService;
     private EnvEditorTab envEditorTab;
     private MessageBusConnection connection;
 
-    public FileSaveListener(Project project, EnvVariableService envVariableService) {
+    public FileSaveListener(Project project, EnvFileService envFileService) {
         this.project = project;
-        this.envVariableService = envVariableService;
+        this.envFileService = envFileService;
     }
 
     /**
@@ -70,18 +70,18 @@ public class FileSaveListener {
      */
     private boolean isFileWeCareAbout(VirtualFile file) {
         // Check if this is an environment file we're tracking
-        if (envVariableService == null) {
+        if (envFileService == null) {
             return false;
         }
         
         // Check if it's one of our environment files
-        VirtualFile activeFile = envVariableService.getActiveEnvFile();
+        VirtualFile activeFile = envFileService.getActiveEnvFile();
         if (file.equals(activeFile)) {
             return true;
         }
         
         // Check other files managed by the env variable service
-        return envVariableService.isEditableEnvFile(file);
+        return envFileService.isEditableEnvFile(file);
     }
 
     /**
@@ -93,7 +93,7 @@ public class FileSaveListener {
         if (envEditorTab != null) {
             String selectedFilePath = envEditorTab.getSelectedFilePath();
             if (selectedFilePath != null) {
-                return envVariableService.findFileByPath(selectedFilePath);
+                return envFileService.findFileByPath(selectedFilePath);
             }
         }
         return null;
@@ -118,7 +118,7 @@ public class FileSaveListener {
                 envEditorTab.reloadCurrentEnvFile();
             } else {
                 // Otherwise, just reload the file in the service's cache
-                envVariableService.parseEnvFile(savedFile);
+                envFileService.parseEnvFile(savedFile);
             }
         });
     }

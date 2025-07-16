@@ -1,16 +1,8 @@
 package com.ringlesoft.visualenv.toolWindow;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.ringlesoft.visualenv.services.EnvVariableService;
-import com.ringlesoft.visualenv.services.ProjectService;
 
-import javax.swing.*;
-import java.awt.*;
 import java.lang.reflect.Field;
 
 /**

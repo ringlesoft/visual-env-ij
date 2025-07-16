@@ -3,14 +3,11 @@ package com.ringlesoft.visualenv.toolWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.ringlesoft.visualenv.model.EnvVariable;
-import com.ringlesoft.visualenv.services.EnvVariableService;
+import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 
-import javax.swing.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,14 +16,14 @@ import java.util.List;
 public class EnvEditorTabTest extends BasePlatformTestCase {
     private EnvEditorTab envEditorTab;
     private Project project;
-    private EnvVariableService envService;
+    private EnvFileService envService;
     private ProjectService projectService;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         project = getProject();
-        envService = project.getService(EnvVariableService.class);
+        envService = project.getService(EnvFileService.class);
         projectService = project.getService(ProjectService.class);
         
         // Create the component we're testing

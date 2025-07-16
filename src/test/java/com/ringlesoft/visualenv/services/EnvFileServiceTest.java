@@ -1,18 +1,13 @@
 package com.ringlesoft.visualenv.services;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.ringlesoft.visualenv.model.EnvVariable;
-import com.ringlesoft.visualenv.profile.EnvProfile;
-import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
@@ -20,14 +15,14 @@ import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 /**
  * Tests for the Environment Variable Service
  */
-public class EnvVariableServiceTest extends BasePlatformTestCase {
-    private EnvVariableService envService;
+public class EnvFileServiceTest extends BasePlatformTestCase {
+    private EnvFileService envService;
     private File tempDir;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        envService = getProject().getService(EnvVariableService.class);
+        envService = getProject().getService(EnvFileService.class);
         
         // Create a temporary directory for test files
         tempDir = createTempDirectory("VisualEnv", "");
@@ -126,7 +121,7 @@ public class EnvVariableServiceTest extends BasePlatformTestCase {
         // Parse the file first to set it as active
         envService.parseEnvFile(virtualEnvFile);
         
-        // This test will likely fail since EnvVariableService in a test environment
+        // This test will likely fail since EnvFileService in a test environment
         // will have limitations on modifying files. Just checking the method exists.
         try {
             envService.updateEnvVariable("DB_HOST", "127.0.0.1");
