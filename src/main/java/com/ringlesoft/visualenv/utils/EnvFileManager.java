@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Utility class for managing environment files
@@ -92,24 +93,6 @@ public class EnvFileManager {
         });
     }
 
-    private static void setEnvVariableInternal(Document document, String key, String value) {
-        String documentText = document.getText();
-        String newLine = key + "=" + value;
-
-        Pattern pattern = Pattern.compile("^" + Pattern.quote(key) + "=.*$", Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(documentText);
-
-        if (matcher.find()) {
-            int start = matcher.start();
-            int end = matcher.end();
-            document.replaceString(start, end, newLine);
-        } else {
-            if (!documentText.isEmpty() && !documentText.endsWith("\n")) {
-                newLine = "\n" + newLine;
-            }
-            document.insertString(document.getTextLength(), newLine + "\n");
-        }
-    }
 
     /**
      * Add a comment above an environment variable
@@ -806,4 +789,57 @@ public class EnvFileManager {
             return handleError(project, "Restore Backup", e);
         }
     }
+
+
+    /**
+     * Generic methods for writing to files
+     */
+
+
+    /**
+     * Update the value of a particular Variable
+     * @param document The document
+     * @param key Env variable key
+     * @param value Env variable value
+     */
+    private static void setEnvVariableInternal(@NotNull Document document, String key, String value) {
+        try {
+            String documentText = document.getText();
+            String newLine = key + "=" + value;
+
+            Pattern pattern = Pattern.compile("^" + Pattern.quote(key) + "=.*$", Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(documentText);
+
+            if (matcher.find()) {
+                int start = matcher.start();
+                int end = matcher.end();
+                document.replaceString(start, end, newLine);
+            } else {
+                if (!documentText.isEmpty() && !documentText.endsWith("\n")) {
+                    newLine = "\n" + newLine;
+                }
+                document.insertString(document.getTextLength(), newLine + "\n");
+            }
+        } catch (Exception e) {
+
+            // TODO Find a way of showing this error to the user
+            throw new RuntimeException(e);
+        } finally {
+
+        }
+    }
+
+//
+//    private void replaceInDocument(Document document, String content, int start, int end) {
+//            document.replaceString(start, end, content);
+//    }
+//    private void insertInDocument(Document document, String content, int position) {
+//            document.insertString(position, content);
+//    }
+//    private void deleteInDocument(Document document, int start, int end) {
+//            document.deleteString(start, end);
+//    }
+//    private void appendInDocument(Document document, String content) {
+//            document.insertString(document.getTextLength(), content);
+//    }
 }
