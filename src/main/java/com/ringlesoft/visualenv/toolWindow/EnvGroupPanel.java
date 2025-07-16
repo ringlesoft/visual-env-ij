@@ -32,7 +32,7 @@ public class EnvGroupPanel extends JPanel {
     
     // Debounce related fields
     private final Map<String, Timer> debounceTimers = new HashMap<>();
-    private static final int DEBOUNCE_DELAY = 500; // milliseconds
+    private static final int DEBOUNCE_DELAY = 1500; // milliseconds
 
     public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvFileService envFileService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
         this.variables = variables;
@@ -111,7 +111,7 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private Component createControlByType(EnvVariable variable) {
-        EnvVariableDefinition definition = EnvVariableRegistry.getDefinition(variable.getName());
+        EnvVariableDefinition definition = envFileService.getActiveProfile().getDefinition(variable.getName());
         
         if (definition != null) {
             switch (definition.getType()) {
@@ -218,7 +218,7 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private String getDescriptionForVariable(EnvVariable variable) {
-        EnvVariableDefinition definition = EnvVariableRegistry.getDefinition(variable.getName());
+        EnvVariableDefinition definition = envFileService.getActiveProfile().getDefinition(variable.getName());
         return definition != null ? definition.getDescription() : "";
     }
     
@@ -232,7 +232,7 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private boolean isSecretVariable(String name) {
-        EnvVariableDefinition definition = EnvVariableRegistry.getDefinition(name);
+        EnvVariableDefinition definition = envFileService.getActiveProfile().getDefinition(name);
         return definition != null && definition.isSecret();
     }
     
