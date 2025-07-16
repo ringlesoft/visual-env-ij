@@ -35,10 +35,7 @@ public class EnvFileManagerTest extends BasePlatformTestCase {
         super.tearDown();
     }
 
-    /**
-     * Test setting an environment variable in a file
-     */
-    public void testSetEnvVariable() throws IOException {
+    public void testGetEnvVariable() throws IOException {
         // Create a test .env file
         File envFile = new File(tempDir, ".env");
         Files.write(envFile.toPath(), (
@@ -49,26 +46,46 @@ public class EnvFileManagerTest extends BasePlatformTestCase {
 
         // Get the virtual file
         VirtualFile virtualEnvFile = refreshAndFindFile(envFile);
-        Project project = mockProject(virtualEnvFile.getPath());
 
         // Try to update an existing variable
-        try {
-            EnvFileManager.setEnvVariable(project, virtualEnvFile, "DB_HOST", "127.0.0.1");
-
-            // Read the file and check if it was updated
-            String content = Files.readString(envFile.toPath());
-            System.out.println(content);
-            assertTrue("Setting Environment Passes", true);
-            // TODO setup Mockito && SettingsManager to enable this
-//            assertTrue("File should contain updated value", content.contains("DB_HOST=127.0.0.1"));
-//            assertTrue("Other variables should remain", content.contains("APP_NAME=\"Original App\""));
-//            assertTrue("Other variables should remain", content.contains("DB_PORT=3306"));
-//            assertTrue("Sets Env Variable", true);
-        } catch (Exception e) {
-            // Some test environments may have trouble with file operations
-            // Just make sure the method exists and is called correctly
-        }
+        String variable = EnvFileManager.getEnvVariable(virtualEnvFile, "DB_HOST");
+        assertEquals("Should find DB_HOST", "localhost", variable);
     }
+
+//    /**
+//     * Test setting an environment variable in a file
+//     */
+//    public void testSetEnvVariable() throws IOException {
+//        // Create a test .env file
+//        File envFile = new File(tempDir, ".env");
+//        Files.write(envFile.toPath(), (
+//                "APP_NAME=\"Original App\"\n" +
+//                        "DB_HOST=localhost\n" +
+//                        "DB_PORT=3306\n"
+//        ).getBytes(StandardCharsets.UTF_8));
+//
+//        // Get the virtual file
+//        VirtualFile virtualEnvFile = refreshAndFindFile(envFile);
+//        Project project = mockProject(virtualEnvFile.getPath());
+//
+//        // Try to update an existing variable
+//        try {
+//            EnvFileManager.setEnvVariable(project, virtualEnvFile, "DB_HOST", "127.0.0.1");
+//
+//            // Read the file and check if it was updated
+//            String content = Files.readString(envFile.toPath());
+//            System.out.println(content);
+//            assertTrue("Setting Environment Passes", true);
+//            // TODO setup Mockito && SettingsManager to enable this
+////            assertTrue("File should contain updated value", content.contains("DB_HOST=127.0.0.1"));
+////            assertTrue("Other variables should remain", content.contains("APP_NAME=\"Original App\""));
+////            assertTrue("Other variables should remain", content.contains("DB_PORT=3306"));
+////            assertTrue("Sets Env Variable", true);
+//        } catch (Exception e) {
+//            // Some test environments may have trouble with file operations
+//            // Just make sure the method exists and is called correctly
+//        }
+//    }
 
 //    /**
 //     * Test adding a new environment variable
