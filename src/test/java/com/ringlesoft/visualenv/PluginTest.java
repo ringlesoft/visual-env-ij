@@ -1,39 +1,55 @@
 package com.ringlesoft.visualenv;
 
-import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.PsiErrorElementUtil;
-import com.ringlesoft.visualenv.services.ProjectService;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.project.Project;
+import com.ringlesoft.visualenv.model.EnvVariable;
+import com.ringlesoft.visualenv.services.EnvVariableService;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Collections;
 
 /**
- * Test class for the Visual Env plugin.
+ * Basic sanity tests for the Visual Env plugin
  */
 @TestDataPath("$CONTENT_ROOT/src/test/testData")
 public class PluginTest extends BasePlatformTestCase {
 
-    public void testXMLFile() {
-        PsiFile psiFile = myFixture.configureByText(XmlFileType.INSTANCE, "<foo>bar</foo>");
-        XmlFile xmlFile = assertInstanceOf(psiFile, XmlFile.class);
-
-        assertFalse(PsiErrorElementUtil.hasErrors(getProject(), xmlFile.getVirtualFile()));
-        assertNotNull(xmlFile.getRootTag());
-
-        if (xmlFile.getRootTag() != null) {
-            assertEquals("foo", xmlFile.getRootTag().getName());
-            assertEquals("bar", xmlFile.getRootTag().getValue().getText());
-        }
+    /**
+     * Test the EnvVariable model class
+     */
+    public void testEnvVariableModel() {
+        // Test basic variable creation
+        EnvVariable variable = new EnvVariable("DB_HOST", "localhost", "/test/path", false, "database");
+        assertEquals("DB_HOST", variable.getName());
+        assertEquals("localhost", variable.getValue());
+        assertEquals("database", variable.getGroup());
+        assertFalse(variable.isSecret());
+        
+        // Test secret variable
+        EnvVariable secretVar = new EnvVariable("API_KEY", "secret123", "/test/path", true, "api");
+        assertTrue(secretVar.isSecret());
     }
-
-    public void testRename() {
-        myFixture.testRename("foo.xml", "foo_after.xml", "a2");
-    }
-
-    public void testProjectService() {
-        ProjectService projectService = getProject().getService(ProjectService.class);
-        assertNotSame(projectService.getRandomNumber(), projectService.getRandomNumber());
+    
+    /**
+     * Test environment variable detection in various formats
+     */
+    public void testEnvVariableFormats() {
+        // Test with quotes
+        EnvVariable quotedVar = new EnvVariable("APP_NAME", "\"My App\"", "/test/path", false, "app");
+        assertEquals("\"My App\"", quotedVar.getValue());
+        
+        // Test with special characters
+        EnvVariable specialCharsVar = new EnvVariable("APP_URL", "http://localhost:8000", "/test/path", false, "app");
+        assertEquals("http://localhost:8000", specialCharsVar.getValue());
     }
 
     @Override

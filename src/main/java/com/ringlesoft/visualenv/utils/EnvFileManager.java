@@ -33,25 +33,7 @@ public class EnvFileManager {
         if (document == null) return;
         ApplicationManager.getApplication().invokeLater(() -> {
             WriteCommandAction.runWriteCommandAction(project, "Update .env Variable", null, () -> {
-                String documentText = document.getText();
-                String newLine = key + "=" + value;
-
-                // Pattern to match the key (with or without value)
-                Pattern pattern = Pattern.compile("^" + Pattern.quote(key) + "=.*$", Pattern.MULTILINE);
-                Matcher matcher = pattern.matcher(documentText);
-
-                if (matcher.find()) {
-                    // Update existing key
-                    int start = matcher.start();
-                    int end = matcher.end();
-                    document.replaceString(start, end, newLine);
-                } else {
-                    // Add new key at the end
-                    if (!documentText.isEmpty() && !documentText.endsWith("\n")) {
-                        newLine = "\n" + newLine;
-                    }
-                    document.insertString(document.getTextLength(), newLine + "\n");
-                }
+                setEnvVariableInternal(document, key, value);
                 FileDocumentManager.getInstance().saveDocument(document);
             });
         }, ModalityState.defaultModalityState());
