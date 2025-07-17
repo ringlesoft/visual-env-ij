@@ -604,8 +604,33 @@ public final class EnvFileService {
      */
     public boolean addVariable(String key, String value) {
         try {
+            key = key.trim()
+                    .replaceAll("\\s+", "_") // Replace spaces with underscores
+                    .replaceAll("[^a-zA-Z0-9_]", "_") // Remove non-alphanumeric characters
+                    .toUpperCase();
             EnvFileManager.setEnvVariable(project, activeEnvFile, key, value);
             return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean deleteEnvVariable(String variableName) {
+        try {
+            EnvFileManager.removeEnvVariable(project, activeEnvFile, variableName);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean renameVariable(String variableName, String newName) {
+        try {
+            newName = newName.trim()
+                    .replaceAll("\\s+", "_") // Replace spaces with underscores
+                    .replaceAll("[^a-zA-Z0-9_]", "_") // Remove non-alphanumeric characters
+                    .toUpperCase();
+            return EnvFileManager.renameEnvVariable(project, activeEnvFile, variableName, newName);
         } catch (Exception e) {
             return false;
         }

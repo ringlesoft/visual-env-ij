@@ -75,6 +75,7 @@ public class EnvFileManager {
                 int end = matcher.end();
                 document.deleteString(start, end);
             }
+            FileDocumentManager.getInstance().saveDocument(document);
         });
     }
 
@@ -458,6 +459,7 @@ public class EnvFileManager {
      */
     public static boolean renameEnvVariable(Project project, VirtualFile envFile,
                                             String oldKey, String newKey) {
+        // Convert to uppercase
         if (oldKey.equals(newKey)) return true; // No change needed
 
         // Get the current value
