@@ -206,11 +206,11 @@ public final class EnvFileService {
                     EnvVariableDefinition definition = variableRegistry.getVariableDefinition(key);
                     if (definition != null && definition.isSecret()) {
                         // Generate a random string for secret values
-                        value = generateRandomString(32);
+                        value = generateRandomString();
                     } else if (value.isEmpty() || value.equals("null") ||
                             (key.toLowerCase().contains("key") && !key.toLowerCase().contains("keyboard"))) {
                         // Heuristic: if it has "key" in the name but no value, randomize it
-                        value = generateRandomString(32);
+                        value = generateRandomString();
                     }
 
                     newContent.append(key).append('=').append(value).append('\n');
@@ -276,15 +276,14 @@ public final class EnvFileService {
     /**
      * Generate a random string for use as a secret key
      *
-     * @param length Length of the string
      * @return Random string
      */
-    private String generateRandomString(int length) {
+    private String generateRandomString() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
         StringBuilder result = new StringBuilder();
         Random random = new Random();
 
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < 32; i++) {
             result.append(characters.charAt(random.nextInt(characters.length())));
         }
 
@@ -358,8 +357,7 @@ public final class EnvFileService {
             }
 
             CommandRunner commandRunner = new CommandRunner(project);
-            String output = commandRunner.runCommandWithOutput(command);
-            return output;
+            return commandRunner.runCommandWithOutput(command);
         } catch (Exception e) {
             LOG.error("Error executing Artisan command", e);
             return "Error: " + e.getMessage();

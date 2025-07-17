@@ -41,7 +41,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
     private final Map<String, EnvGroupPanel> groupPanels = new HashMap<>();
     private VirtualFile selectedEnvFile;
     private final Map<String, String> fileBasenameToPath = new HashMap<>();
-    private FileSaveListener fileSaveListener;
+    private final FileSaveListener fileSaveListener;
 
     /**
      * Create a new Environment editor tab
@@ -367,7 +367,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         fileSaveListener.dispose();
     }
 

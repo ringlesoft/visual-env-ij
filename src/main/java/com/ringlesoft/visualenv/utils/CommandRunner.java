@@ -34,8 +34,6 @@ public class CommandRunner {
             String[] args = new String[parts.length - 2];
             System.arraycopy(parts, 2, args, 0, args.length);
             runCommandWithOutput(parts[0], parts[1], args, (processListener != null) ? processListener : outputHandler());
-        } else {
-
         }
     }
 
@@ -156,7 +154,7 @@ public class CommandRunner {
                     Notifications.Bus.notify(new Notification(
                             "Visual Env Notification Group",
                             "Error",
-                            "Failed to execute command: " + output.toString(),
+                            "Failed to execute command: " + output,
                             NotificationType.ERROR
                     ), project);
                 }
