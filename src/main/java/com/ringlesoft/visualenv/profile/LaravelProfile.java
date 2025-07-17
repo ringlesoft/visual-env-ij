@@ -467,19 +467,19 @@ public class LaravelProfile implements EnvProfile {
                 "Generate a new application key and store it in the .env file"
             ).addEnvironmentVariable("ENV_FILE", "{selectedEnvFile}"),
 
-            new CliActionDefinition(
-                "artisan_env_encrypt",
-                "Encrypt Environment File",
-                "php artisan env:encrypt",
-                "Encrypts an environment file variable using the Laravel framework"
-            ).addParameter(
-                new CliParameterDefinition(
-                    "name",
-                    "Variable Name",
-                    "Name of the environment variable to retrieve",
-                    true
-                )
-            ),
+//            new CliActionDefinition(
+//                "artisan_env_encrypt",
+//                "Encrypt Environment File",
+//                "php artisan env:encrypt",
+//                "Encrypts an environment file variable using the Laravel framework"
+//            ).addParameter(
+//                new CliParameterDefinition(
+//                    "name",
+//                    "Variable Name",
+//                    "Name of the environment variable to retrieve",
+//                    true
+//                )
+//            ),
         };
         return Arrays.asList(definitions);
     }
