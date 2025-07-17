@@ -7,18 +7,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.ringlesoft.visualenv.VisualEnvBundle;
-import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
 import com.ringlesoft.visualenv.utils.CommandRunner;
 import com.ringlesoft.visualenv.utils.ProjectDetector;
-import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -55,9 +49,10 @@ public final class ProjectService {
         EnvFileService envFileService = project.getService(EnvFileService.class);
         EnvProfile activeProfile = ProfileManager.getProfileByName(projectType);
         envFileService.setActiveProfile(activeProfile);
-        scanAndProcessEnvFiles(project, activeProfile);
-        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
+        envFileService.scanAndProcessEnvFiles();
     }
+
+
 
     public String getActiveEnvFile() {
         return activeEnvFile;
@@ -74,36 +69,6 @@ public final class ProjectService {
      */
     public int getRandomNumber() {
         return random.nextInt(100) + 1;
-    }
-
-    /**
-     * Checks for .env files in the project root and creates one from .env.example if needed.
-     *
-     * @param project The current project
-     */
-    private void scanAndProcessEnvFiles(@NotNull Project project, EnvProfile profile) {
-        String basePath = project.getBasePath();
-        if (basePath == null) {
-            return;
-        }
-
-        List<EnvFileDefinition> envFileDefinitions = profile.getEnvFileDefinitions(); // Add null check>
-        List<VirtualFile> foundFiles = new java.util.ArrayList<>();
-
-        for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
-            VirtualFile envFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, envFileDefinition.getName()).toString());
-            if (envFile != null) {
-                // Parse existing .env file but do it safely
-                EnvFileService envFileService = project.getService(EnvFileService.class);
-                if (envFileService != null) {  // Add null check
-                    envFileService.parseEnvFile(envFile);
-                }
-                if (envFileDefinition.isPrimary()) {
-                    setActiveEnvFile(envFileDefinition.getName());
-                }
-                foundFiles.add(envFile);
-            }
-        }
     }
 
     public CommandRunner getCommandRunner() {

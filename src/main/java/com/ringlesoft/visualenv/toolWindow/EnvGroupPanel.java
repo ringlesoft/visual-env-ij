@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.codehaus.plexus.util.StringUtils.capitalizeFirstLetter;
-
 /**
  * Panel that displays environment variables grouped by category
  */
@@ -570,6 +568,13 @@ public class EnvGroupPanel extends JPanel {
                 item.setOpaque(false);
             }
         });
+    }
+
+    private String capitalizeFirstLetter(String input){
+        if (!input.isEmpty()) {
+            return input.substring(0, 1).toUpperCase() + input.substring(1);
+        }
+        return input;
     }
 
 }

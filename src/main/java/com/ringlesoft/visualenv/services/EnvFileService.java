@@ -13,9 +13,11 @@ import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
 import com.ringlesoft.visualenv.utils.CommandRunner;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -144,6 +146,40 @@ public final class EnvFileService {
     }
 
     /**
+     * Checks for .env files in the project root and creates one from .env.example if needed.
+     *
+     */
+    public void scanAndProcessEnvFiles() {
+        String basePath = project.getBasePath();
+        if (basePath == null) {
+            return;
+        }
+        ProjectService projectService = project.getService(ProjectService.class);
+        List<EnvFileDefinition> envFileDefinitions = activeProfile.getEnvFileDefinitions(); // Add null check>
+        for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
+            VirtualFile envFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, envFileDefinition.getName()).toString());
+            if (envFile != null) {
+                // Parse existing .env file but do it safely
+                    parseEnvFile(envFile);
+                if (envFileDefinition.isPrimary()) {
+
+                    projectService.setActiveEnvFile(envFileDefinition.getName());
+                }
+
+            }
+        }
+        if(fileEnvVariables.isEmpty()) {
+            activeEnvFile = null;
+            projectService.setActiveEnvFile(null);
+        }
+    }
+
+    public void rescanEnvFiles() {
+            scanAndProcessEnvFiles();
+    }
+
+
+    /**
      * Create an environment file from a template file
      *
      * @param templateFile The template file (e.g., .env.example)
@@ -242,35 +278,6 @@ public final class EnvFileService {
     }
 
     /**
-     * Find a template file for creating a new environment file
-     *
-     * @return The template file or null if none is found
-     */
-    public VirtualFile findTemplateFile() {
-        // Get all env files by definition
-        Map<EnvFileDefinition, List<VirtualFile>> allFiles = findAllEnvFiles();
-
-        // First try to find a template file
-        for (EnvFileDefinition definition : getEnvFileDefinitions()) {
-            if (definition.isTemplate() && allFiles.containsKey(definition)) {
-                List<VirtualFile> files = allFiles.get(definition);
-                if (!files.isEmpty()) {
-                    return files.get(0);
-                }
-            }
-        }
-
-        // If no template file is found, try to use any environment file
-        for (List<VirtualFile> files : allFiles.values()) {
-            if (!files.isEmpty()) {
-                return files.get(0);
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Generate a random string for use as a secret key
      *
      * @return Random string
@@ -287,44 +294,6 @@ public final class EnvFileService {
         return result.toString();
     }
 
-    /**
-     * Create a new blank environment file
-     *
-     * @param fileName Name of the file to create
-     * @return true if the file was successfully created, false otherwise
-     */
-    public boolean createBlankEnvFile(String fileName) {
-        String projectBasePath = project.getBasePath();
-        if (projectBasePath == null) {
-            return false;
-        }
-
-        // Ensure the filename starts with .env
-        if (!fileName.startsWith(".env")) {
-            fileName = ".env" + fileName;
-        }
-
-        File newFile = new File(projectBasePath, fileName);
-        if (newFile.exists()) {
-            return false; // Don't overwrite existing file
-        }
-
-        try {
-            boolean created = newFile.createNewFile();
-            if (created) {
-                LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(newFile));
-                VirtualFile newVirtualFile = LocalFileSystem.getInstance().findFileByPath(newFile.getAbsolutePath());
-                if (newVirtualFile != null) {
-                    activeEnvFile = newVirtualFile;
-                    return true;
-                }
-            }
-            return false;
-        } catch (IOException e) {
-            LOG.error("Error creating blank env file", e);
-            return false;
-        }
-    }
 
     /**
      * For backward compatibility with existing code
@@ -379,6 +348,7 @@ public final class EnvFileService {
         return activeProfile;
     }
 
+
     /**
      * Sets the active profile for this service.
      * This will update the variable registry to use the new profile.
@@ -414,104 +384,12 @@ public final class EnvFileService {
     }
 
     /**
-     * Find environment files in the project that match the provided definition
-     *
-     * @param definition The environment file definition to search for
-     * @return List of matching files
+     * Get the environment variables for each file in the project
      */
-    public List<VirtualFile> findEnvFilesByDefinition(EnvFileDefinition definition) {
-        List<VirtualFile> result = new ArrayList<>();
-        if (project.getBasePath() == null) {
-            return result;
-        }
-
-        VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(project.getBasePath());
-        if (projectDir == null) {
-            return result;
-        }
-
-        // Look for the exact file name in the project root
-        VirtualFile file = projectDir.findChild(definition.getName());
-        if (file != null && !file.isDirectory()) {
-            result.add(file);
-        }
-
-        return result;
+    public Map<VirtualFile, List<EnvVariable>> getFileEnvVariables() {
+        return fileEnvVariables;
     }
 
-    /**
-     * Find all environment files in the project that match any definition from the active profile
-     *
-     * @return Map of environment file definition to matching files
-     */
-    public Map<EnvFileDefinition, List<VirtualFile>> findAllEnvFiles() {
-        Map<EnvFileDefinition, List<VirtualFile>> result = new LinkedHashMap<>();
-
-        // Get all environment file definitions from the active profile
-        List<EnvFileDefinition> definitions = getEnvFileDefinitions();
-
-        // Sort definitions by priority (important for UI display order)
-        definitions.sort(Comparator.comparingInt(EnvFileDefinition::getPriority));
-
-        // Find files for each definition
-        for (EnvFileDefinition definition : definitions) {
-            List<VirtualFile> files = findEnvFilesByDefinition(definition);
-            if (!files.isEmpty()) {
-                result.put(definition, files);
-            }
-        }
-
-        // Also look for any .env* files that might not be in the definitions
-        if (project.getBasePath() != null) {
-            VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(project.getBasePath());
-            if (projectDir != null) {
-                for (VirtualFile file : projectDir.getChildren()) {
-                    if (!file.isDirectory() && file.getName().startsWith(".env")) {
-                        boolean alreadyAdded = false;
-
-                        // Check if this file is already included
-                        for (List<VirtualFile> existingFiles : result.values()) {
-                            if (existingFiles.contains(file)) {
-                                alreadyAdded = true;
-                                break;
-                            }
-                        }
-
-                        // Add as a custom env file if not already included
-                        if (!alreadyAdded) {
-                            EnvFileDefinition customDef = EnvFileDefinition.createCustomEnv(file.getName());
-                            List<VirtualFile> customFiles = new ArrayList<>();
-                            customFiles.add(file);
-                            result.put(customDef, customFiles);
-                        }
-                    }
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Get a display name for an environment file, including its type
-     *
-     * @param file The file
-     * @return Display name with type information
-     */
-    public String getEnvFileDisplayName(VirtualFile file) {
-        if (file == null) {
-            return "No file selected";
-        }
-
-        String fileName = file.getName();
-        EnvFileDefinition definition = getEnvFileDefinitionForFile(file);
-
-        if (definition != null) {
-            return fileName + " (" + definition.getDescription() + ")";
-        }
-
-        return fileName;
-    }
 
     /**
      * Find the environment file definition that matches a given file
@@ -555,31 +433,6 @@ public final class EnvFileService {
     public boolean isEditableEnvFile(VirtualFile file) {
         EnvFileDefinition definition = getEnvFileDefinitionForFile(file);
         return definition != null && definition.isEditable();
-    }
-
-    /**
-     * Get the highest priority environment file available in the project
-     *
-     * @return The highest priority file, or null if none found
-     */
-    public VirtualFile getDefaultEnvFile() {
-        Map<EnvFileDefinition, List<VirtualFile>> allFiles = findAllEnvFiles();
-        if (allFiles.isEmpty()) {
-            return null;
-        }
-
-        // Sort definitions by priority and find the first one with files
-        List<EnvFileDefinition> sortedDefinitions = new ArrayList<>(allFiles.keySet());
-        sortedDefinitions.sort(Comparator.comparingInt(EnvFileDefinition::getPriority));
-
-        for (EnvFileDefinition definition : sortedDefinitions) {
-            List<VirtualFile> files = allFiles.get(definition);
-            if (files != null && !files.isEmpty()) {
-                return files.get(0);
-            }
-        }
-
-        return null;
     }
 
     public VirtualFile findFileByPath(String selectedFilePath) {
@@ -635,4 +488,201 @@ public final class EnvFileService {
             return false;
         }
     }
+
+
+//    /**
+//     * Find a template file for creating a new environment file
+//     *
+//     * @return The template file or null if none is found
+//     */
+//    public VirtualFile findTemplateFile() {
+//        // Get all env files by definition
+//        Map<EnvFileDefinition, List<VirtualFile>> allFiles = findAllEnvFiles();
+//
+//        // First try to find a template file
+//        for (EnvFileDefinition definition : getEnvFileDefinitions()) {
+//            if (definition.isTemplate() && allFiles.containsKey(definition)) {
+//                List<VirtualFile> files = allFiles.get(definition);
+//                if (!files.isEmpty()) {
+//                    return files.get(0);
+//                }
+//            }
+//        }
+//
+//        // If no template file is found, try to use any environment file
+//        for (List<VirtualFile> files : allFiles.values()) {
+//            if (!files.isEmpty()) {
+//                return files.get(0);
+//            }
+//        }
+//
+//        return null;
+//    }
+
+
+
+//    /**
+//     * Find environment files in the project that match the provided definition
+//     *
+//     * @param definition The environment file definition to search for
+//     * @return List of matching files
+//     */
+//    public List<VirtualFile> findEnvFilesByDefinition(EnvFileDefinition definition) {
+//        List<VirtualFile> result = new ArrayList<>();
+//        if (project.getBasePath() == null) {
+//            return result;
+//        }
+//
+//        VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(project.getBasePath());
+//        if (projectDir == null) {
+//            return result;
+//        }
+//
+//        // Look for the exact file name in the project root
+//        VirtualFile file = projectDir.findChild(definition.getName());
+//        if (file != null && !file.isDirectory()) {
+//            result.add(file);
+//        }
+//
+//        return result;
+//    }
+
+//    /**
+//     * Find all environment files in the project that match any definition from the active profile
+//     *
+//     * @return Map of environment file definition to matching files
+//     */
+//    public Map<EnvFileDefinition, List<VirtualFile>> findAllEnvFiles() {
+//        Map<EnvFileDefinition, List<VirtualFile>> result = new LinkedHashMap<>();
+//
+//        // Get all environment file definitions from the active profile
+//        List<EnvFileDefinition> definitions = getEnvFileDefinitions();
+//
+//        // Sort definitions by priority (important for UI display order)
+//        definitions.sort(Comparator.comparingInt(EnvFileDefinition::getPriority));
+//
+//        // Find files for each definition
+//        for (EnvFileDefinition definition : definitions) {
+//            List<VirtualFile> files = findEnvFilesByDefinition(definition);
+//            if (!files.isEmpty()) {
+//                result.put(definition, files);
+//            }
+//        }
+//
+//        // Also look for any .env* files that might not be in the definitions
+//        if (project.getBasePath() != null) {
+//            VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(project.getBasePath());
+//            if (projectDir != null) {
+//                for (VirtualFile file : projectDir.getChildren()) {
+//                    if (!file.isDirectory() && file.getName().startsWith(".env")) {
+//                        boolean alreadyAdded = false;
+//
+//                        // Check if this file is already included
+//                        for (List<VirtualFile> existingFiles : result.values()) {
+//                            if (existingFiles.contains(file)) {
+//                                alreadyAdded = true;
+//                                break;
+//                            }
+//                        }
+//
+//                        // Add as a custom env file if not already included
+//                        if (!alreadyAdded) {
+//                            EnvFileDefinition customDef = EnvFileDefinition.createCustomEnv(file.getName());
+//                            List<VirtualFile> customFiles = new ArrayList<>();
+//                            customFiles.add(file);
+//                            result.put(customDef, customFiles);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return result;
+//    }
+
+//    /**
+//     * Get a display name for an environment file, including its type
+//     *
+//     * @param file The file
+//     * @return Display name with type information
+//     */
+//    public String getEnvFileDisplayName(VirtualFile file) {
+//        if (file == null) {
+//            return "No file selected";
+//        }
+//        String fileName = file.getName();
+//        EnvFileDefinition definition = getEnvFileDefinitionForFile(file);
+//        if (definition != null) {
+//            return fileName + " (" + definition.getDescription() + ")";
+//        }
+//        return fileName;
+//    }
+
+
+//    /**
+//     * Create a new blank environment file
+//     *
+//     * @param fileName Name of the file to create
+//     * @return true if the file was successfully created, false otherwise
+//     */
+//    public boolean createBlankEnvFile(String fileName) {
+//        String projectBasePath = project.getBasePath();
+//        if (projectBasePath == null) {
+//            return false;
+//        }
+//
+//        // Ensure the filename starts with .env
+//        if (!fileName.startsWith(".env")) {
+//            fileName = ".env" + fileName;
+//        }
+//
+//        File newFile = new File(projectBasePath, fileName);
+//        if (newFile.exists()) {
+//            return false; // Don't overwrite existing file
+//        }
+//
+//        try {
+//            boolean created = newFile.createNewFile();
+//            if (created) {
+//                LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(newFile));
+//                VirtualFile newVirtualFile = LocalFileSystem.getInstance().findFileByPath(newFile.getAbsolutePath());
+//                if (newVirtualFile != null) {
+//                    activeEnvFile = newVirtualFile;
+//                    return true;
+//                }
+//            }
+//            return false;
+//        } catch (IOException e) {
+//            LOG.error("Error creating blank env file", e);
+//            return false;
+//        }
+//    }
+
+
+//    /**
+//     * Get the highest priority environment file available in the project
+//     *
+//     * @return The highest priority file, or null if none found
+//     */
+//    public VirtualFile getDefaultEnvFile() {
+//        Map<EnvFileDefinition, List<VirtualFile>> allFiles = findAllEnvFiles();
+//        if (allFiles.isEmpty()) {
+//            return null;
+//        }
+//
+//        // Sort definitions by priority and find the first one with files
+//        List<EnvFileDefinition> sortedDefinitions = new ArrayList<>(allFiles.keySet());
+//        sortedDefinitions.sort(Comparator.comparingInt(EnvFileDefinition::getPriority));
+//
+//        for (EnvFileDefinition definition : sortedDefinitions) {
+//            List<VirtualFile> files = allFiles.get(definition);
+//            if (files != null && !files.isEmpty()) {
+//                return files.get(0);
+//            }
+//        }
+//
+//        return null;
+//    }
+
+
 }
