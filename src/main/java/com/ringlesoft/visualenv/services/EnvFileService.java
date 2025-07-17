@@ -118,9 +118,6 @@ public final class EnvFileService {
         }
         
         try {
-            if (value.contains(" ")) {
-                value = "\"" + value + "\"";
-            }
             // Use EnvFileManager to update the variable
             EnvFileManager.setEnvVariable(project, activeEnvFile, name, value);
             // Update cache
@@ -607,23 +604,6 @@ public final class EnvFileService {
      */
     public boolean addVariable(String key, String value) {
         try {
-            key = key.trim()
-                    .replaceAll("\\s+", "_")           // spaces to underscores
-                    .replaceAll("[^a-zA-Z0-9_]", "_")  // special chars to underscores
-                    .replaceAll("_{2,}", "_")          // multiple underscores to single
-                    .replaceAll("^[0-9_]+", "")        // remove leading numbers/underscores
-                    .toUpperCase();
-
-            value = value.replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "\\r");
-
-            // Quote if contains spaces, special chars, or starts with quote
-            if (value.matches(".*[\\s#'`${}()].*") || value.startsWith("\"")) {
-                value = "\"" + value + "\"";
-            }
-
             EnvFileManager.setEnvVariable(project, activeEnvFile, key, value);
             return true;
         } catch (Exception e) {

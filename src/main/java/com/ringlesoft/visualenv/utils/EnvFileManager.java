@@ -803,6 +803,16 @@ public class EnvFileManager {
      * @param value Env variable value
      */
     private static void setEnvVariableInternal(@NotNull Document document, String key, String value) {
+
+        value = value.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+        // Quote if contains spaces, special chars, or starts with quote
+        if (value.matches(".*[\\s#'`${}()].*") || value.startsWith("\"")) {
+            value = "\"" + value + "\"";
+        }
+
         try {
             String documentText = document.getText();
             String newLine = key + "=" + value;
@@ -815,6 +825,13 @@ public class EnvFileManager {
                 int end = matcher.end();
                 document.replaceString(start, end, newLine);
             } else {
+                key = key.trim()
+                        .replaceAll("\\s+", "_")           // spaces to underscores
+                        .replaceAll("[^a-zA-Z0-9_]", "_")  // special chars to underscores
+                        .replaceAll("_{2,}", "_")          // multiple underscores to single
+                        .replaceAll("^[0-9_]+", "")        // remove leading numbers/underscores
+                        .toUpperCase();
+                newLine = key + "=" + value;
                 if (!documentText.isEmpty() && !documentText.endsWith("\n")) {
                     newLine = "\n" + newLine;
                 }
