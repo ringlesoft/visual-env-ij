@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.JBUI;
+import com.ringlesoft.visualenv.listeners.EnvFileWatcher;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
@@ -23,9 +24,6 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     private Project project;
     private EnvFileService envService;
     private ProjectService projectService;
-    private JTextField filterField;
-    private JComboBox<String> envFileSelector;
-    private JComboBox<String> profileSelector;
     private JLabel projectTypeLabel;
     private Map<String, EnvProfile> availableProfiles;
     private JPanel contentPanel;
@@ -33,25 +31,35 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     private JPanel mainPanel;
     private JPanel controlPanel;
     private JPanel bottomPanel;
+    private EnvFileWatcher envFileWatcher;
+
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         this.project = project;
         this.envService = project.getService(EnvFileService.class);
         this.projectService = project.getService(ProjectService.class);
-
-
+        envFileWatcher = new EnvFileWatcher(project, this);
+        envFileWatcher.startWatching();
         mainPanel = new JPanel(new BorderLayout());
+        mainPanel.removeAll();
         mainPanel.setMinimumSize(new Dimension(500, 500));
-        controlPanel = createControlPanel();
 
+        createComponents();
+
+        ContentFactory contentFactory = ContentFactory.getInstance();
+        Content content = contentFactory.createContent(mainPanel, "", false);
+        toolWindow.getContentManager().addContent(content);
+    }
+
+    private void createComponents() {
+        controlPanel = createControlPanel();
         contentPanel = new JPanel(new BorderLayout());
         tabbedPane = new JBTabbedPane();
 
         // Create Environment Variables tab
         JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
-
         // Add Artisan tab if supported
         if (envService.getActiveProfile().supportsArtisanCommands()) {
             JPanel artisanPanel = createCliActionsPanel();
@@ -69,11 +77,9 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         bottomPanel.setBorder(JBUI.Borders.empty(5));
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        addAddVariableButton();
-
-        ContentFactory contentFactory = ContentFactory.getInstance();
-        Content content = contentFactory.createContent(mainPanel, "", false);
-        toolWindow.getContentManager().addContent(content);
+        if (envService.getActiveEnvFile() != null) {
+            addAddVariableButton();
+        }
     }
 
     /**
@@ -113,32 +119,25 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     /**
      * Update the UI when the profile changes
      */
-    private void updateUI() {
-        // Update project type label
-        String projectType = projectService.getProjectType();
-        projectTypeLabel.setText("Project type: " + projectType);
-
-        // Update button visibility based on profile
-        Container buttonPanel = controlPanel;
-
-        // Find action buttons in the control panel (assuming they're in a box layout or similar)
-        for (Component component : buttonPanel.getComponents()) {
-            if (component instanceof JButton button) {
-                if (button.getText().equals("Create from Example")) {
-                    // Only show if profile supports template files
-                    button.setVisible(envService.getActiveProfile().supportsTemplateFiles());
-                }
-            }
-        }
-
-        // Update tabs
-        while (tabbedPane.getTabCount() > 0) {
-            tabbedPane.remove(0);
-        }
-
+    public void updateUI() {
+        // Update profile label to match initialization
+        String profileName = envService.getActiveProfile().getProfileName();
+        projectTypeLabel.setText("Profile: " + profileName);
+        // Clear and rebuild the tabs
+        tabbedPane.removeAll();
         // Create Environment Variables tab
         JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
+        // Add Artisan tab if supported by the active profile
+        if (envService.getActiveProfile().supportsArtisanCommands()) {
+            JPanel artisanPanel = createCliActionsPanel();
+            tabbedPane.addTab("CLI Commands", artisanPanel);
+        }
+        // Update bottom panel
+        bottomPanel.removeAll();
+        if (envService.getActiveEnvFile() != null) {
+            addAddVariableButton();
+        }
 
         // Refresh UI
         mainPanel.revalidate();
@@ -165,7 +164,8 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
             GridBagConstraints gbc = new GridBagConstraints();
 
             // Variable Name section
-            gbc.gridx = 0; gbc.gridy = 0;
+            gbc.gridx = 0;
+            gbc.gridy = 0;
             gbc.anchor = GridBagConstraints.WEST;
             gbc.insets = JBUI.insetsBottom(5);
             JLabel keyLabel = new JLabel("Variable Name:");
@@ -243,6 +243,15 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         bottomPanel.add(addButton);
     }
 
+    public void addScanFilesButton() {
+        JButton scanButton = new JButton("Scan .env files");
+        scanButton.addActionListener(e -> {
+            envService.rescanEnvFiles();
+            updateUI();
+        });
+        bottomPanel.add(scanButton);
+    }
+
 
     private JPanel getContentPanel() {
         return contentPanel;
@@ -251,11 +260,13 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     @Override
     public boolean shouldBeAvailable(@NotNull Project project) {
         // Always make the tool window available
+//        EnvFileService envService = project.getService(EnvFileService.class);
         return true;
     }
 
     @Override
     public void close() throws Exception {
         // Dispose everything held by this tool window
+        envFileWatcher.stopWatching();
     }
 }
