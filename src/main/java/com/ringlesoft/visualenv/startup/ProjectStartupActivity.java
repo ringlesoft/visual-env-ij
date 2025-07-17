@@ -30,15 +30,13 @@ public class ProjectStartupActivity implements ProjectActivity {
                 LOG.error("Error in Visual Env initialization", e);
             }
         });
-        
+
         return Unit.INSTANCE;
     }
 
     private void initializeProject(@NotNull Project project) {
-        ProjectService projectService = project.getService(ProjectService.class);
-        if (projectService != null) {  // Add null check to be extra safe
-            projectService.initialize();
-        }
+        ProjectService projectService = new ProjectService(project);
+        projectService.initialize();
     }
 
 }
