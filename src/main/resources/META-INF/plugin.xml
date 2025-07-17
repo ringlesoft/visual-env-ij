@@ -2,7 +2,7 @@
 <idea-plugin>
     <id>com.ringlesoft.visualenv</id>
     <name>Visual Env</name>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <vendor email="ringunger@gmail.com" url="https://www.ringlesoft.com/plugins/visual-env">RingleSoft</vendor>
     <description><![CDATA[
     <p>Streamline environment variable management across your projects with an intuitive interface that adapts to your development framework.</p>
