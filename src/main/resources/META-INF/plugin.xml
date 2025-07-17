@@ -2,27 +2,18 @@
 <idea-plugin>
     <id>com.ringlesoft.visualenv</id>
     <name>Visual Env</name>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <vendor email="ringunger@gmail.com" url="https://www.ringlesoft.com/plugins/visual-env">RingleSoft</vendor>
     <description><![CDATA[
-        <p>Manage and interact with environment variables in your projects with a user-friendly interface.</p>
-        
-        <p><b>Key Features:</b></p>
-        <ul>
-            <li><b>Environment Variable Management</b> - View, edit, and organize environment variables from .env files</li>
-            <li><b>Framework Detection</b> - Automatically detects Laravel projects and adapts to project-specific settings</li>
-            <li><b>Type-Aware Interface</b> - Specialized UI controls for different variable types (toggles for booleans, dropdowns for enums)</li>
-            <li><b>CLI Command Integration</b> - Run framework-specific commands directly from the IDE</li>
-            <li><b>Smart Organization</b> - Group variables by category for better navigation</li>
-            <li><b>Template Support</b> - Create new .env files from .env.example templates with one click</li>
-        </ul>
-        
-        <p>
-        <b>Framework Support:</b></p>
-        <ul>
-            <li><b>Laravel</b> - Full support with predefined variables and artisan command integration</li>
-            <li>More frameworks coming soon!</li>
-        </ul>
+    <p>Streamline environment variable management across your projects with an intuitive interface that adapts to your development framework.</p>
+    <p><b>Core Features:</b></p>
+    <ul>
+        <li><b>Smart .env Management</b> - Edit variables with type-aware controls (toggles, dropdowns, validation)</li>
+        <li><b>Framework Integration</b> - Auto-detects Laravel projects with predefined variables and artisan commands</li>
+        <li><b>Quick Setup</b> - Generate .env files from templates and organize variables by category</li>
+        <li><b>CLI Integration</b> - Execute framework commands (php artisan key:generate) directly from the IDE</li>
+    </ul>
+    <p><b>Supported Frameworks:</b> Laravel, Node.js, Django, Generic (with more coming soon)</p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
