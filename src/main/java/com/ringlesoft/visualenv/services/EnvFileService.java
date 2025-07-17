@@ -11,6 +11,7 @@ import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
+import com.ringlesoft.visualenv.utils.CommandRunner;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
 
 import java.io.*;
@@ -356,52 +357,9 @@ public final class EnvFileService {
                 return "Artisan file not found. This is not a Laravel project.";
             }
 
-            // Execute command
-            String fullCommand = "php " + artisanFile.getPath() + " " + command;
-
-            // Create process
-            ProcessBuilder processBuilder = new ProcessBuilder();
-            processBuilder.command("bash", "-c", fullCommand);
-            processBuilder.directory(new File(basePath));
-
-            // Set environment variables from active .env file
-            if (activeEnvFile != null) {
-                Map<String, String> environment = processBuilder.environment();
-                List<EnvVariable> variables = parseEnvFile(activeEnvFile);
-
-                for (EnvVariable var : variables) {
-                    environment.put(var.getName(), var.getValue());
-                }
-            }
-
-            // Execute
-            Process process = processBuilder.start();
-
-            // Capture output
-            StringBuilder output = new StringBuilder();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                output.append(line).append("\n");
-            }
-
-            // Capture errors
-            StringBuilder error = new StringBuilder();
-            reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            while ((line = reader.readLine()) != null) {
-                error.append(line).append("\n");
-            }
-
-            // Wait for process to finish
-            int exitCode = process.waitFor();
-
-            // Return output
-            if (exitCode == 0) {
-                return output.toString();
-            } else {
-                return "Error (exit code " + exitCode + "):\n" + error.toString();
-            }
-
+            CommandRunner commandRunner = new CommandRunner(project);
+            String output = commandRunner.runCommandWithOutput(command);
+            return output;
         } catch (Exception e) {
             LOG.error("Error executing Artisan command", e);
             return "Error: " + e.getMessage();

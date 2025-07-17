@@ -1,11 +1,12 @@
 package com.ringlesoft.visualenv.toolWindow;
 
-import com.intellij.util.ui.JBUI;
+import com.intellij.openapi.ui.ComboBox;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
-import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.services.EnvFileService;
+import com.ringlesoft.visualenv.services.ProjectService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
+import com.ringlesoft.visualenv.utils.CommandRunner;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -26,10 +27,9 @@ public class EnvGroupPanel extends JPanel {
 
     private List<EnvVariable> variables;
     private final EnvFileService envFileService;
+    private final ProjectService projectService;
     private final Consumer<String> statusUpdater;
-    private final Map<String, Component> variableComponents = new HashMap<>();
     private final JPanel variablesPanel;
-    private final JLabel titleLabel;
     private boolean expanded = true;
     private String currentFilter;
     
@@ -37,9 +37,10 @@ public class EnvGroupPanel extends JPanel {
     private final Map<String, Timer> debounceTimers = new HashMap<>();
     private static final int DEBOUNCE_DELAY = 1500; // milliseconds
 
-    public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvFileService envFileService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
+    public EnvGroupPanel(String groupName, List<EnvVariable> variables, EnvFileService envFileService, ProjectService projectService, Consumer<String> statusUpdater, EnvEditorTab parentTab) {
         this.variables = variables;
         this.envFileService = envFileService;
+        this.projectService = projectService;
         this.statusUpdater = statusUpdater;
 
         // Setup panel
@@ -61,16 +62,16 @@ public class EnvGroupPanel extends JPanel {
         headerPanel.add(expandIcon, BorderLayout.WEST);
         
         // Group name and count
-        titleLabel = new JLabel(capitalizeFirstLetter(groupName));
+        JLabel titleLabel = new JLabel(capitalizeFirstLetter(groupName));
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD));
         titleLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
 
         // Add count badge to the right
-        JLabel countBadge = new JLabel(String.valueOf(variables.size()) + " ");
+        JLabel countBadge = new JLabel(variables.size() + " ");
         countBadge.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         // reduce font size by 1
-        countBadge.setFont(countBadge.getFont().deriveFont(Font.PLAIN, countBadge.getFont().getSize() - 2));;
+        countBadge.setFont(countBadge.getFont().deriveFont(Font.PLAIN, countBadge.getFont().getSize() - 2));
         countBadge.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
         headerPanel.add(countBadge, BorderLayout.EAST);
         
@@ -117,9 +118,6 @@ public class EnvGroupPanel extends JPanel {
         Component valueComponent = createControlByType(variable);
         panel.add(valueComponent, BorderLayout.CENTER);
 
-        // Store reference to the component for filtering
-        variableComponents.put(variable.getName(), panel);
-        
         return panel;
     }
     
@@ -127,16 +125,13 @@ public class EnvGroupPanel extends JPanel {
         EnvVariableDefinition definition = envFileService.getActiveProfile().getDefinition(variable.getName());
         
         if (definition != null) {
-            switch (definition.getType()) {
-                case BOOLEAN:
-                    return createBooleanControl(variable);
-                case DROPDOWN:
-                    return createDropdownControl(variable, definition.getPossibleValues());
-                case INTEGER:
-                    return createIntegerControl(variable);
-                default:
-                    return createTextControl(variable, variable.isSecret());
-            }
+            return switch (definition.getType()) {
+                case BOOLEAN -> createBooleanControl(variable);
+                case DROPDOWN -> createDropdownControl(variable, definition.getPossibleValues());
+                case INTEGER -> createIntegerControl(variable);
+                case GENERATED -> createGeneratorControl(variable);
+                default -> createTextControl(variable, variable.isSecret());
+            };
         } else {
             // Default to text input
             return createTextControl(variable, variable.isSecret());
@@ -186,7 +181,7 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private Component createDropdownControl(EnvVariable variable, List<String> possibleValues) {
-        JComboBox<String> comboBox = new JComboBox<>();
+        JComboBox<String> comboBox = new ComboBox<>();
         
         for (String value : possibleValues) {
             comboBox.addItem(value);
@@ -212,6 +207,11 @@ public class EnvGroupPanel extends JPanel {
     }
     
     private Component createIntegerControl(EnvVariable variable) {
+
+        if(variable.hasInterpolation()){ // If the variable has interpolation just make it a text field
+            return createTextControl(variable, variable.isSecret());
+        }
+
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(
                 Integer.parseInt(variable.getValue().isEmpty() ? "0" : variable.getValue()),
                 Integer.MIN_VALUE,
@@ -228,6 +228,37 @@ public class EnvGroupPanel extends JPanel {
         spinner.addChangeListener(e -> updateVariable(variable.getName(), spinner.getValue().toString()));
         
         return spinner;
+    }
+
+    private Component createGeneratorControl(EnvVariable variable) {
+        // For now this is bypassed. TODO: Work on this for the next version
+        if(true){
+            return createTextControl(variable, variable.isSecret());
+        }
+        EnvVariableDefinition definition = envFileService.getActiveProfile().getDefinition(variable.getName());
+        if(definition != null && definition.getGeneratorCommand() != null) {
+            String command = definition.getGeneratorCommand();
+            JButton button = new JButton("Generate");
+            button.setToolTipText("Generate " + variable.getName());
+            button.addActionListener(e -> {
+                try {
+                    button.setText("Generating...");
+                    CommandRunner commandRunner =  projectService.getCommandRunner();
+                    commandRunner.runCommand(command);
+                } catch (Exception ex) {
+                    // Failed to execute
+                } finally {
+                    button.setText("Generate");
+                }
+            });
+            // Set preferred size to maintain consistent height
+            Dimension preferredSize = button.getPreferredSize();
+            preferredSize.height = 28;  // Fixed height for button
+            button.setPreferredSize(preferredSize);
+            button.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredSize.height));
+            return button;
+        }
+        return createTextControl(variable, variable.isSecret());
     }
     
     private String getDescriptionForVariable(EnvVariable variable) {
@@ -263,19 +294,17 @@ public class EnvGroupPanel extends JPanel {
     private void updateVariablesPanel() {
         variablesPanel.removeAll();
         int visibleCount = 0;
-        
-        for (int i = 0; i < variables.size(); i++) {
-            EnvVariable variable = variables.get(i);
-            
+
+        for (EnvVariable variable : variables) {
             boolean shouldShow = currentFilter == null || currentFilter.isEmpty() ||
                     variable.getName().toLowerCase().contains(currentFilter) ||
-                    variable.getValue().toLowerCase().contains(currentFilter) ;
-            
+                    variable.getValue().toLowerCase().contains(currentFilter);
+
             if (shouldShow) {
                 JPanel varPanel = createControlForVariable(variable);
                 variablesPanel.add(varPanel);
                 visibleCount++;
-                
+
                 // Add a separator between variables
                 if (visibleCount < countVisibleVariables()) {
                     variablesPanel.add(Box.createRigidArea(new Dimension(0, 1)));
@@ -323,7 +352,6 @@ public class EnvGroupPanel extends JPanel {
     public void refreshVariables(List<EnvVariable> updatedVariables) {
         // Clear current variables and components
         variables = updatedVariables;
-        variableComponents.clear();
         variablesPanel.removeAll();
         
         // Rebuild the variable controls
@@ -382,11 +410,9 @@ public class EnvGroupPanel extends JPanel {
         }
         
         // Create a new timer
-        Timer timer = new Timer(DEBOUNCE_DELAY, e -> {
-            com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(() -> {
-                updateVariable(variableName, value);
-            }, com.intellij.openapi.application.ModalityState.defaultModalityState());
-        });
+        Timer timer = new Timer(DEBOUNCE_DELAY, e
+                -> com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater(()
+                -> updateVariable(variableName, value), com.intellij.openapi.application.ModalityState.defaultModalityState()));
         timer.setRepeats(false);
         timer.start();
         

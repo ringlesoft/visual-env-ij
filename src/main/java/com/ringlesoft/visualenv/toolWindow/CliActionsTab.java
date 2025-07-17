@@ -47,16 +47,16 @@ public class CliActionsTab extends JPanel {
      */
     private JPanel createCommandsPanel() {
         // Use a panel with BorderLayout for overall structure
+        // Use a panel with BorderLayout for overall structure
         JPanel commandsPanel = new JPanel(new BorderLayout());
-        
+
         // Create a panel with FlowLayout for horizontal button arrangement
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        
+
         // Add command buttons based on the profile's available CLI actions
         if (profile != null) {
             addProfileCommands(buttonsPanel);
         }
-        
         // Add the buttons panel to the top of the main panel
         commandsPanel.add(buttonsPanel, BorderLayout.NORTH);
         

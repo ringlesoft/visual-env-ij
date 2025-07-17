@@ -236,7 +236,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
             String groupName = entry.getKey();
             List<EnvVariable> groupVars = entry.getValue();
 
-            EnvGroupPanel groupPanel = new EnvGroupPanel(groupName, groupVars, envFileService, this::updateStatus, this);
+            EnvGroupPanel groupPanel = new EnvGroupPanel(groupName, groupVars, envFileService, projectService, this::updateStatus, this);
             groupPanels.put(groupName, groupPanel);
             envVarsPanel.add(groupPanel);
         }

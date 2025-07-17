@@ -36,7 +36,7 @@ public class LaravelProfile implements EnvProfile {
         register("APP_ENV", "Application environment", Arrays.asList("local", "production", "testing", "staging"),
                 EnvVariableDefinition.VariableType.DROPDOWN, GROUP_APP, false);
         register("APP_KEY", "Application encryption key", Collections.emptyList(),
-                EnvVariableDefinition.VariableType.STRING, GROUP_APP, true);
+                EnvVariableDefinition.VariableType.GENERATED, GROUP_APP, true);
         register("APP_DEBUG", "Application debug mode", Arrays.asList("true", "false"),
                 EnvVariableDefinition.VariableType.BOOLEAN, GROUP_APP, false);
         register("APP_URL", "Application URL", Collections.emptyList(),
@@ -373,9 +373,13 @@ public class LaravelProfile implements EnvProfile {
                 GROUP_VITE_PUSHER,
                 false
         );
-        // And many more variables...
-        // Only included a subset for brevity, 
-        // in the full implementation we would include all Laravel environment variables
+
+
+        EnvVariableDefinition appKey = REGISTRY.get("APP_KEY");
+        if (appKey != null) {
+            appKey.setGeneratorCommand("php artisan key:generate");
+            REGISTRY.put("APP_KEY", appKey);
+        }
     }
     
     @Override

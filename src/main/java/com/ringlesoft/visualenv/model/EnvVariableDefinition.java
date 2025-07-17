@@ -13,7 +13,8 @@ public class EnvVariableDefinition {
         STRING,
         BOOLEAN,
         DROPDOWN,
-        INTEGER
+        INTEGER,
+        GENERATED
     }
 
     private final String name;
@@ -22,6 +23,7 @@ public class EnvVariableDefinition {
     private final VariableType type;
     private final String group;
     private final boolean isSecret;
+    private String generatorCommand;
 
     /**
      * Constructor for environment variable definition
@@ -71,6 +73,18 @@ public class EnvVariableDefinition {
 
     public boolean isSecret() {
         return isSecret;
+    }
+
+    boolean isGenerated() {
+        return type == VariableType.GENERATED;
+    }
+
+    public String getGeneratorCommand() {
+        return generatorCommand;
+    }
+
+    public void setGeneratorCommand(String command) {
+        generatorCommand = command;
     }
 
     @Override
