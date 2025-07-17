@@ -6,6 +6,7 @@ import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.model.EnvVariableRegistry;
 import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
+import com.ringlesoft.visualenv.utils.CommandRunner;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -228,6 +229,32 @@ public class EnvGroupPanel extends JPanel {
         spinner.addChangeListener(e -> updateVariable(variable.getName(), spinner.getValue().toString()));
         
         return spinner;
+    }
+
+    private Component createGeneratorControl(EnvVariable variable) {
+        if(variable.getGeneratorCommand() == null) {
+            return createTextControl(variable, variable.isSecret());
+        }
+        String command = variable.getGeneratorCommand();
+
+        JButton button = new JButton("Generate");
+        button.setToolTipText("Generate " + variable.getName());
+        button.addActionListener(e -> {
+            try {
+                button.setText("Generating...");
+               CommandRunner.runCommand(command);
+            } catch (Exception ex) {
+                // Failed to execute
+            } finally {
+                button.setText("Generate");
+            }
+        });
+        // Set preferred size to maintain consistent height
+        Dimension preferredSize = button.getPreferredSize();
+        preferredSize.height = 28;  // Fixed height for button
+        button.setPreferredSize(preferredSize);
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, preferredSize.height));
+        return button;
     }
     
     private String getDescriptionForVariable(EnvVariable variable) {
