@@ -1,7 +1,10 @@
 package com.ringlesoft.visualenv.utils;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Utility class to detect project types
@@ -14,24 +17,23 @@ public class ProjectDetector {
      * @param project The project to check
      * @return true if the project is a Laravel project, false otherwise
      */
-    public static boolean isLaravelProject(Project project) {
-        if (project == null) return false;
-        
-        VirtualFile baseDir = project.getProjectFile();
+    public static boolean isLaravelProject(@NotNull Project project) {
+
+        VirtualFile baseDir = getProjectRootAsVirtualFile(project);
         if (baseDir == null) return false;
-        
-        // Check for artisan file (Laravel's command-line tool)
+
+         // Check for artisan file (Laravel's command-line tool)
         VirtualFile artisanFile = baseDir.findChild("artisan");
         if (artisanFile != null && !artisanFile.isDirectory()) {
             return true;
         }
-        
+
         // Check for composer.json with Laravel framework
         VirtualFile composerJson = baseDir.findChild("composer.json");
         if (composerJson != null) {
             return checkComposerForLaravel(composerJson);
         }
-        
+
         // Check for typical Laravel directories
         return hasLaravelDirectoryStructure(baseDir);
     }
@@ -45,7 +47,7 @@ public class ProjectDetector {
     public static boolean isNodeJSProject(Project project) {
         if (project == null) return false;
         
-        VirtualFile baseDir = project.getProjectFile();
+        VirtualFile baseDir = getProjectRootAsVirtualFile(project);
         if (baseDir == null) return false;
         
         // Check for package.json
@@ -72,7 +74,7 @@ public class ProjectDetector {
     public static boolean isDjangoProject(Project project) {
         if (project == null) return false;
         
-        VirtualFile baseDir = project.getProjectFile();
+        VirtualFile baseDir = getProjectRootAsVirtualFile(project);
         if (baseDir == null) return false;
         
         // Check for manage.py
@@ -149,7 +151,7 @@ public class ProjectDetector {
                 foundDirs++;
             }
         }
-        
+
         // If we find most Laravel directories, it's likely a Laravel project
         return foundDirs >= 4;
     }
@@ -178,5 +180,13 @@ public class ProjectDetector {
             }
         }
         return false;
+    }
+
+
+    private static VirtualFile getProjectRootAsVirtualFile(Project project) {
+        String basePath = project.getBasePath();
+        if (basePath == null) return null;
+
+        return VirtualFileManager.getInstance().findFileByUrl("file://" + basePath);
     }
 }
