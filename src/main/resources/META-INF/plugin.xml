@@ -31,7 +31,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.ringlesoft.visualenv.toolWindow.VisualEnvToolWindowFactory" id="Visual Env"
-                    anchor="right" secondary="true" icon="AllIcons.General.Gear"/>
+                    anchor="right" secondary="true" icon="AllIcons.Actions.Preview"/>
         <postStartupActivity implementation="com.ringlesoft.visualenv.startup.ProjectStartupActivity" />
         <notificationGroup id="Visual Env Notification Group" displayType="BALLOON" />
     </extensions>

@@ -4,23 +4,22 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.ringlesoft.visualenv.utils.ProjectDetector;
 import com.ringlesoft.visualenv.VisualEnvBundle;
-import org.jetbrains.annotations.NotNull;
+import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.profile.ProfileManager;
-import com.ringlesoft.visualenv.model.EnvFileDefinition;
+import com.ringlesoft.visualenv.utils.CommandRunner;
+import com.ringlesoft.visualenv.utils.ProjectDetector;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 
 /**
  * Project service for Visual Env plugin.
@@ -47,12 +46,17 @@ public final class ProjectService {
     }
 
     public void initialize() {
+        if(project == null) {
+            // This won't work because it heavily relies on the project variable
+            LOG.info("Project is null. The plugin cannot be initialized");
+            return;
+        }
         EnvFileService envFileService = project.getService(EnvFileService.class);
         projectType = ProjectDetector.getProjectType(project);
         EnvProfile activeProfile = ProfileManager.getProfileByName(projectType);
         envFileService.setActiveProfile(activeProfile);
         scanAndProcessEnvFiles(project, activeProfile);
-        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
+//        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
     }
 
     public String getActiveEnvFile() {
@@ -104,6 +108,10 @@ public final class ProjectService {
         if (foundFiles.isEmpty()) {
             // TODO show
         }
+    }
+
+    public CommandRunner getCommandRunner() {
+        return new CommandRunner(project);
     }
 
     /**

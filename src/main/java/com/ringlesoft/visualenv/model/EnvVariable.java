@@ -50,6 +50,10 @@ public class EnvVariable {
         return group;
     }
 
+    public boolean hasInterpolation() {
+        return value.contains("${") || value.contains("$(");
+    }
+
     @Override
     public String toString() {
         return name + "=" + getValue();
