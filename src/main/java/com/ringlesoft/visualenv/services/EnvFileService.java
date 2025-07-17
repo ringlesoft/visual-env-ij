@@ -118,9 +118,6 @@ public final class EnvFileService {
         }
         
         try {
-            if (value.contains(" ")) {
-                value = "\"" + value + "\"";
-            }
             // Use EnvFileManager to update the variable
             EnvFileManager.setEnvVariable(project, activeEnvFile, name, value);
             // Update cache
@@ -206,11 +203,11 @@ public final class EnvFileService {
                     EnvVariableDefinition definition = variableRegistry.getVariableDefinition(key);
                     if (definition != null && definition.isSecret()) {
                         // Generate a random string for secret values
-                        value = generateRandomString(32);
+                        value = generateRandomString();
                     } else if (value.isEmpty() || value.equals("null") ||
                             (key.toLowerCase().contains("key") && !key.toLowerCase().contains("keyboard"))) {
                         // Heuristic: if it has "key" in the name but no value, randomize it
-                        value = generateRandomString(32);
+                        value = generateRandomString();
                     }
 
                     newContent.append(key).append('=').append(value).append('\n');
@@ -276,15 +273,14 @@ public final class EnvFileService {
     /**
      * Generate a random string for use as a secret key
      *
-     * @param length Length of the string
      * @return Random string
      */
-    private String generateRandomString(int length) {
+    private String generateRandomString() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
         StringBuilder result = new StringBuilder();
         Random random = new Random();
 
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < 32; i++) {
             result.append(characters.charAt(random.nextInt(characters.length())));
         }
 
@@ -358,8 +354,7 @@ public final class EnvFileService {
             }
 
             CommandRunner commandRunner = new CommandRunner(project);
-            String output = commandRunner.runCommandWithOutput(command);
-            return output;
+            return commandRunner.runCommandWithOutput(command);
         } catch (Exception e) {
             LOG.error("Error executing Artisan command", e);
             return "Error: " + e.getMessage();
@@ -600,5 +595,44 @@ public final class EnvFileService {
 
     public String getLastUpdatedVariable() {
         return lastUpdatedVariable;
+    }
+
+    /**
+     * Create a new environment variable to the currently active file
+     * @param key Name of the variable
+     * @param value Value of the variable
+     */
+    public boolean addVariable(String key, String value) {
+        try {
+            key = key.trim()
+                    .replaceAll("\\s+", "_") // Replace spaces with underscores
+                    .replaceAll("[^a-zA-Z0-9_]", "_") // Remove non-alphanumeric characters
+                    .toUpperCase();
+            EnvFileManager.setEnvVariable(project, activeEnvFile, key, value);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean deleteEnvVariable(String variableName) {
+        try {
+            EnvFileManager.removeEnvVariable(project, activeEnvFile, variableName);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean renameVariable(String variableName, String newName) {
+        try {
+            newName = newName.trim()
+                    .replaceAll("\\s+", "_") // Replace spaces with underscores
+                    .replaceAll("[^a-zA-Z0-9_]", "_") // Remove non-alphanumeric characters
+                    .toUpperCase();
+            return EnvFileManager.renameEnvVariable(project, activeEnvFile, variableName, newName);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

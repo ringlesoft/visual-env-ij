@@ -32,6 +32,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     private JTabbedPane tabbedPane;
     private JPanel mainPanel;
     private JPanel controlPanel;
+    private JPanel bottomPanel;
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -40,28 +41,36 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         this.projectService = project.getService(ProjectService.class);
 
 
-
         mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setMinimumSize(new Dimension(500, 500));
         controlPanel = createControlPanel();
-        
+
         contentPanel = new JPanel(new BorderLayout());
         tabbedPane = new JBTabbedPane();
-        
+
         // Create Environment Variables tab
         JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
-        
+
         // Add Artisan tab if supported
         if (envService.getActiveProfile().supportsArtisanCommands()) {
             JPanel artisanPanel = createCliActionsPanel();
             tabbedPane.addTab("CLI Commands", artisanPanel);
         }
-        
+
         contentPanel.add(tabbedPane, BorderLayout.CENTER);
-        
+
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(contentPanel, BorderLayout.CENTER);
-        
+
+
+        // Bottom actions
+        bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBorder(JBUI.Borders.empty(5));
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        addAddVariableButton();
+
         ContentFactory contentFactory = ContentFactory.getInstance();
         Content content = contentFactory.createContent(mainPanel, "", false);
         toolWindow.getContentManager().addContent(content);
@@ -75,9 +84,9 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         // set minimum width to 500
         panel.setMinimumSize(new Dimension(500, 0));
         panel.setBorder(JBUI.Borders.empty(5));
-        
+
         JPanel topPanel = new JPanel(new GridLayout(1, 1, 0, 5));
-        
+
         // First row - project type and profile selector
         JPanel projectTypePanel = new JPanel(new BorderLayout());
 
@@ -87,7 +96,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         projectTypeLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         projectTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
         projectTypePanel.add(projectTypeLabel, BorderLayout.WEST);
-        
+
         topPanel.add(projectTypePanel);
         panel.add(topPanel, BorderLayout.NORTH);
 
@@ -98,7 +107,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
      * Create the CLI commands panel for the active profile
      */
     private JPanel createCliActionsPanel() {
-        return new CliActionsTab( envService, envService.getActiveProfile());
+        return new CliActionsTab(envService, envService.getActiveProfile());
     }
 
     /**
@@ -108,36 +117,28 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         // Update project type label
         String projectType = projectService.getProjectType();
         projectTypeLabel.setText("Project type: " + projectType);
-        
+
         // Update button visibility based on profile
         Container buttonPanel = controlPanel;
-        
+
         // Find action buttons in the control panel (assuming they're in a box layout or similar)
         for (Component component : buttonPanel.getComponents()) {
-            if (component instanceof JButton) {
-                JButton button = (JButton) component;
+            if (component instanceof JButton button) {
                 if (button.getText().equals("Create from Example")) {
                     // Only show if profile supports template files
                     button.setVisible(envService.getActiveProfile().supportsTemplateFiles());
                 }
             }
         }
-        
+
         // Update tabs
         while (tabbedPane.getTabCount() > 0) {
             tabbedPane.remove(0);
         }
-        
+
         // Create Environment Variables tab
         JPanel envPanel = new EnvEditorTab(project, envService, projectService);
         tabbedPane.addTab("Environment Variables", envPanel);
-        
-        // Add CLI Commands tab if supported
-        // This tab is currently Disabled
-//        if (envService.getActiveProfile().supportsArtisanCommands()) {
-//            JPanel artisanPanel = createCliActionsPanel();
-//            tabbedPane.addTab("CLI Commands", artisanPanel);
-//        }
 
         // Refresh UI
         mainPanel.revalidate();
@@ -152,38 +153,101 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         JButton addButton = new JButton("+ Add Variable");
         addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         addButton.addActionListener(e -> {
-            // Create a new panel with text fields for key and value
-            JPanel newVarPanel = new JPanel(new BorderLayout(10, 0));
-            newVarPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            newVarPanel.setBorder(JBUI.Borders.emptyBottom(5));
+            // Create a modal dialog for adding a new variable
+            JDialog dialog = new JDialog();
+            dialog.setTitle("Add New Variable to " + envService.getActiveEnvFile().getName());
+            dialog.setModal(true);
+            dialog.setLayout(new BorderLayout());
 
-            JTextField keyField = new JTextField("NEW_VARIABLE");
-            keyField.setBorder(JBUI.Borders.emptyRight(10));
-            JTextField valueField = new JTextField("");
+            // Main form panel with proper spacing
+            JPanel formPanel = new JPanel(new GridBagLayout());
+            formPanel.setBorder(JBUI.Borders.empty(20));
+            GridBagConstraints gbc = new GridBagConstraints();
 
-            newVarPanel.add(keyField, BorderLayout.WEST);
-            newVarPanel.add(valueField, BorderLayout.CENTER);
+            // Variable Name section
+            gbc.gridx = 0; gbc.gridy = 0;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.insets = JBUI.insetsBottom(5);
+            JLabel keyLabel = new JLabel("Variable Name:");
+            formPanel.add(keyLabel, gbc);
 
-            // Insert it before the add button
-            contentPanel.add(newVarPanel, contentPanel.getComponentCount() - 1);
+            gbc.gridy = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1.0;
+            gbc.insets = JBUI.insetsBottom(15);
+            JTextField keyField = new JTextField(20);
+            formPanel.add(keyField, gbc);
+
+            // Value section
+            gbc.gridy = 2;
+            gbc.fill = GridBagConstraints.NONE;
+            gbc.weightx = 0;
+            gbc.insets = JBUI.insetsBottom(5);
+            JLabel valueLabel = new JLabel("Value:");
+            formPanel.add(valueLabel, gbc);
+
+            gbc.gridy = 3;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.weightx = 1.0;
+            gbc.insets = JBUI.insetsBottom(15);
+            JTextField valueField = new JTextField(20);
+            formPanel.add(valueField, gbc);
+
+            // Message pane for notifications
+            gbc.gridy = 4;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = JBUI.emptyInsets();
+            JLabel messagePane = new JLabel();
+            messagePane.setText("");
+            messagePane.setForeground(UIManager.getColor("Label.disabledForeground"));
+            messagePane.setFont(messagePane.getFont().deriveFont(Font.ITALIC, messagePane.getFont().getSize() - 1f));
+            formPanel.add(messagePane, gbc);
+
+            // Button panel
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            buttonPanel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
+
+            JButton cancelButton = new JButton("Cancel");
+            JButton saveButton = new JButton("Add");
+
+            cancelButton.addActionListener(event -> dialog.dispose());
+            saveButton.addActionListener(event -> {
+                String key = keyField.getText();
+                String value = valueField.getText();
+                messagePane.setText("");
+                if (key.isEmpty() || value.isEmpty()) {
+                    return;
+                }
+                if (envService.addVariable(key, value)) {
+                    dialog.dispose();
+                } else {
+                    messagePane.setText("Failed to add variable");
+                }
+            });
+
+            buttonPanel.add(cancelButton);
+            buttonPanel.add(saveButton);
+
+            dialog.add(formPanel, BorderLayout.CENTER);
+            dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+            dialog.pack();
+            dialog.setSize(350, dialog.getHeight()); // Slightly wider for better proportions
+            dialog.setLocationRelativeTo(null); // Center on screen
 
             // Focus the key field
             keyField.requestFocus();
             keyField.selectAll();
-            // Refresh UI
-            contentPanel.revalidate();
-            contentPanel.repaint();
+            dialog.setVisible(true);
         });
-
-        contentPanel.add(addButton);
+        bottomPanel.add(addButton);
     }
 
 
-    
     private JPanel getContentPanel() {
         return contentPanel;
     }
-    
+
     @Override
     public boolean shouldBeAvailable(@NotNull Project project) {
         // Always make the tool window available

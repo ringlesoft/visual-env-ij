@@ -20,7 +20,7 @@ public class CliActionsTab extends JPanel {
     private final EnvFileService envService;
     private final EnvProfile profile;
     private JTextArea resultArea; // Added field for displaying results
-    
+
     /**
      * Create a new Artisan tab
      *
@@ -147,8 +147,7 @@ public class CliActionsTab extends JPanel {
      */
     private void executeCliAction(CliActionDefinition action) {
         String command = action.getCommand();
-        String result = "";
-        
+
         if (action.isRequiresUserInput()) {
             // Get parameters
             List<CliParameterDefinition> parameters = action.getParameters();
@@ -173,7 +172,7 @@ public class CliActionsTab extends JPanel {
         }
         
         // Execute the command
-        result = envService.executeArtisanCommand(command);
+        String result = envService.executeArtisanCommand(command);
         displayCommandResult(result, action.getName() + " Result");
     }
     

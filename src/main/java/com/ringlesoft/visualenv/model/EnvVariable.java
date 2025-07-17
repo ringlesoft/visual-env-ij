@@ -31,7 +31,7 @@ public class EnvVariable {
     }
 
     public String getValue() {
-        return isSecret ? "********" : value;
+        return isSecret ? "*".repeat(value.length()) : value;
     }
 
     public String getRawValue() {

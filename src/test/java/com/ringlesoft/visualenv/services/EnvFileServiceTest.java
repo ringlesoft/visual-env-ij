@@ -68,7 +68,7 @@ public class EnvFileServiceTest extends BasePlatformTestCase {
         assertVariable(variables, "APP_NAME", "My Test App");
         assertVariable(variables, "DB_HOST", "localhost");
         assertVariable(variables, "DB_PORT", "3306");
-        assertVariable(variables, "API_KEY", "********");
+        assertVariable(variables, "API_KEY", "*********");
         
         // Check quotes handling
         assertVariable(variables, "QUOTED_VALUE", "This is quoted");

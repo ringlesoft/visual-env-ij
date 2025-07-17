@@ -1,6 +1,8 @@
 package com.ringlesoft.visualenv.toolWindow;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.model.EnvVariable;
 import com.ringlesoft.visualenv.model.EnvVariableDefinition;
 import com.ringlesoft.visualenv.services.EnvFileService;
@@ -12,7 +14,10 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,14 +111,63 @@ public class EnvGroupPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 0));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setBorder(VisualEnvTheme.VARIABLE_PANEL_BORDER);
-        
+
         // Create variable name label
         JLabel nameLabel = new JLabel(variable.getName() + ":");
         nameLabel.setFont(nameLabel.getFont().deriveFont(Font.PLAIN, nameLabel.getFont().getSize() - 1));
         nameLabel.setBorder(VisualEnvTheme.VARIABLE_NAME_BORDER);
         nameLabel.setToolTipText(getDescriptionForVariable(variable));
+
+        // Add right-click context menu
+        JPopupMenu contextMenu = new JPopupMenu();
+
+        JMenuItem copyItem = new JMenuItem("Copy Variable Name");
+        copyItem.setIcon(AllIcons.Actions.Copy);
+        copyItem.setHorizontalAlignment(SwingConstants.LEFT);
+        copyItem.setPreferredSize(new Dimension(180, 30));
+        copyItem.addActionListener(e -> {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+                    new StringSelection(variable.getName()), null);
+            statusUpdater.accept("Variable name copied to clipboard");
+        });
+        contextMenu.add(copyItem);
+
+        JMenuItem renameItem = new JMenuItem("Rename Variable");
+        renameItem.setIcon(AllIcons.Actions.Edit);
+        renameItem.setHorizontalAlignment(SwingConstants.LEFT);
+        renameItem.setPreferredSize(new Dimension(180, 30));
+        renameItem.addActionListener(e -> showRenameDialog(variable));
+        contextMenu.add(renameItem);
+
+        JMenuItem deleteItem = new JMenuItem("Delete Variable");
+        deleteItem.setIcon(AllIcons.Actions.GC);
+        deleteItem.setHorizontalAlignment(SwingConstants.LEFT);
+        deleteItem.setPreferredSize(new Dimension(180, 30));
+        deleteItem.addActionListener(e -> {
+            if(envFileService.deleteEnvVariable(variable.getName())){
+                // Remove the variable from the list
+            } else {
+                // failed
+            }
+        });
+
+        // Hover Effect
+        addHoverEffect(copyItem);
+        addHoverEffect(renameItem);
+        addHoverEffect(deleteItem);
+
+        contextMenu.add(deleteItem);
+
+        nameLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    contextMenu.show(nameLabel, e.getX(), e.getY());
+                }
+            }
+        });
         panel.add(nameLabel, BorderLayout.WEST);
-        
+
         // Create variable value component based on type
         Component valueComponent = createControlByType(variable);
         panel.add(valueComponent, BorderLayout.CENTER);
@@ -269,7 +323,7 @@ public class EnvGroupPanel extends JPanel {
     private void updateVariable(String name, String value) {
         boolean success = envFileService.updateEnvVariable(name, value);
         if (success) {
-            statusUpdater.accept("Updated " + name + " to " + (isSecretVariable(name) ? "*****" : value));
+            statusUpdater.accept("Updated " + name + " to " + (isSecretVariable(name) ? "*".repeat(name.length()) : value));
         } else {
             statusUpdater.accept("Failed to update " + name);
         }
@@ -424,4 +478,98 @@ public class EnvGroupPanel extends JPanel {
         variablesPanel.setVisible(visible && expanded);
         setVisible(visible && expanded);
     }
+
+    private void showRenameDialog(EnvVariable variable) {
+        // Create a modal dialog for adding a new variable
+        JDialog renameDialog = new JDialog();
+        renameDialog.setTitle("Rename " + variable.getName());
+        renameDialog.setModal(true);
+        renameDialog.setLayout(new BorderLayout());
+
+        // Main form panel with proper spacing
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        formPanel.setBorder(JBUI.Borders.empty(20));
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        // Variable Name section
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = JBUI.insetsBottom(5);
+        JLabel keyLabel = new JLabel("New Name:");
+        formPanel.add(keyLabel, gbc);
+
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.insets = JBUI.insetsBottom(15);
+        JTextField keyField = new JTextField(20);
+        keyField.setText(variable.getName());
+        formPanel.add(keyField, gbc);
+
+        // Message pane for notifications
+        gbc.gridy = 4;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = JBUI.emptyInsets();
+        JLabel messagePane = new JLabel();
+        messagePane.setText("");
+        messagePane.setForeground(UIManager.getColor("Label.disabledForeground"));
+        messagePane.setFont(messagePane.getFont().deriveFont(Font.ITALIC, messagePane.getFont().getSize() - 1f));
+        formPanel.add(messagePane, gbc);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
+
+        JButton cancelButton = new JButton("Cancel");
+        JButton saveButton = new JButton("Save");
+
+        cancelButton.addActionListener(event -> renameDialog.dispose());
+        saveButton.addActionListener(event -> {
+            String key = keyField.getText();
+            messagePane.setText("");
+            if (key.isEmpty()) {
+                return;
+            }
+            if (envFileService.renameVariable(variable.getName(), key)) {
+                renameDialog.dispose();
+            } else {
+                messagePane.setText("Failed to rename variable");
+            }
+        });
+
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(saveButton);
+        renameDialog.add(formPanel, BorderLayout.CENTER);
+        renameDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        renameDialog.pack();
+        renameDialog.setSize(350, renameDialog.getHeight()); // Slightly wider for better proportions
+        renameDialog.setLocationRelativeTo(null); // Center on screen
+
+        // Focus the key field
+        keyField.requestFocus();
+        keyField.selectAll();
+        renameDialog.setVisible(true);
+    }
+
+
+    private void addHoverEffect(JMenuItem item) {
+        Color originalBg = item.getBackground();
+        Color hoverBg = VisualEnvTheme.BACKGROUND_HIGHLIGHT;
+
+        item.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                item.setBackground(hoverBg);
+                item.setOpaque(true);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                item.setBackground(originalBg);
+                item.setOpaque(false);
+            }
+        });
+    }
+
 }

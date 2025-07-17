@@ -17,7 +17,7 @@ public class ProjectDetector {
     public static boolean isLaravelProject(Project project) {
         if (project == null) return false;
         
-        VirtualFile baseDir = project.getBaseDir();
+        VirtualFile baseDir = project.getProjectFile();
         if (baseDir == null) return false;
         
         // Check for artisan file (Laravel's command-line tool)
@@ -45,7 +45,7 @@ public class ProjectDetector {
     public static boolean isNodeJSProject(Project project) {
         if (project == null) return false;
         
-        VirtualFile baseDir = project.getBaseDir();
+        VirtualFile baseDir = project.getProjectFile();
         if (baseDir == null) return false;
         
         // Check for package.json
@@ -72,7 +72,7 @@ public class ProjectDetector {
     public static boolean isDjangoProject(Project project) {
         if (project == null) return false;
         
-        VirtualFile baseDir = project.getBaseDir();
+        VirtualFile baseDir = project.getProjectFile();
         if (baseDir == null) return false;
         
         // Check for manage.py

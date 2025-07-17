@@ -104,10 +104,6 @@ public final class ProjectService {
                 foundFiles.add(envFile);
             }
         }
-
-        if (foundFiles.isEmpty()) {
-            // TODO show
-        }
     }
 
     public CommandRunner getCommandRunner() {
