@@ -46,17 +46,13 @@ public final class ProjectService {
     }
 
     public void initialize() {
-        if(project == null) {
-            // This won't work because it heavily relies on the project variable
-            LOG.info("Project is null. The plugin cannot be initialized");
-            return;
-        }
-        EnvFileService envFileService = project.getService(EnvFileService.class);
         projectType = ProjectDetector.getProjectType(project);
+        System.out.println("Project type: " + projectType);
+        EnvFileService envFileService = project.getService(EnvFileService.class);
         EnvProfile activeProfile = ProfileManager.getProfileByName(projectType);
         envFileService.setActiveProfile(activeProfile);
         scanAndProcessEnvFiles(project, activeProfile);
-//        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
+        showNotification("Hello there!", "This is Visual Env!", NotificationType.INFORMATION);
     }
 
     public String getActiveEnvFile() {
