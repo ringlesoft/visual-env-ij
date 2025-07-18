@@ -9,7 +9,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.listeners.EnvFileWatcher;
-import com.ringlesoft.visualenv.profile.EnvProfile;
 import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
@@ -17,19 +16,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoCloseable {
 
     private Project project;
     private EnvFileService envService;
     private ProjectService projectService;
-    private JLabel projectTypeLabel;
-    private Map<String, EnvProfile> availableProfiles;
-    private JPanel contentPanel;
-    private JTabbedPane tabbedPane;
     private JPanel mainPanel;
-    private JPanel controlPanel;
     private JPanel bottomPanel;
     private EnvFileWatcher envFileWatcher;
 
@@ -91,9 +84,9 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
      * Create normal UI when .env files are available
      */
     private void createNormalUI() {
-        controlPanel = createControlPanel();
-        contentPanel = new JPanel(new BorderLayout());
-        tabbedPane = new JBTabbedPane();
+        JPanel controlPanel = createControlPanel();
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        JTabbedPane tabbedPane = new JBTabbedPane();
 
         // Create Environment Variables tab
         JPanel envPanel = new EnvEditorTab(project, envService, projectService);
@@ -135,7 +128,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
 
         // Add project type detection label
         String profileName = envService.getActiveProfile().getProfileName();
-        projectTypeLabel = new JBLabel("Profile: " + profileName);
+        JLabel projectTypeLabel = new JBLabel("Profile: " + profileName);
         projectTypeLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
         projectTypeLabel.setBorder(JBUI.Borders.emptyLeft(5));
         projectTypePanel.add(projectTypeLabel, BorderLayout.WEST);
@@ -273,30 +266,16 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         bottomPanel.add(addButton);
     }
 
-    public void addScanFilesButton() {
-        JButton scanButton = new JButton("Scan .env files");
-        scanButton.addActionListener(e -> {
-            envService.rescanEnvFiles();
-            updateUI();
-        });
-        bottomPanel.add(scanButton);
-    }
-
-
-    private JPanel getContentPanel() {
-        return contentPanel;
-    }
-
     @Override
     public boolean shouldBeAvailable(@NotNull Project project) {
         // Always make the tool window available
-//        EnvFileService envService = project.getService(EnvFileService.class);
         return true;
     }
 
     @Override
-    public void close() throws Exception {
-        // Dispose everything held by this tool window
-        envFileWatcher.stopWatching();
+    public void close() {
+        if(envFileWatcher != null) {
+            envFileWatcher.stopWatching();
+        }
     }
 }
