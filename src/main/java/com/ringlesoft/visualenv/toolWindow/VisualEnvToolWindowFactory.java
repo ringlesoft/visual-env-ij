@@ -137,7 +137,7 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         String profileName = envService.getActiveProfile().getProfileName();
         projectTypeLabel = new JBLabel("Profile: " + profileName);
         projectTypeLabel.setForeground(VisualEnvTheme.TEXT_SECONDARY);
-        projectTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
+        projectTypeLabel.setBorder(JBUI.Borders.emptyLeft(5));
         projectTypePanel.add(projectTypeLabel, BorderLayout.WEST);
 
         topPanel.add(projectTypePanel);

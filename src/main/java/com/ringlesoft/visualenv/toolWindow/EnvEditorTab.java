@@ -179,7 +179,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
             public void mousePressed(MouseEvent e) {
                 // Update conditional menu item visibility before showing
                 updateCreateFromTemplateVisibility(createFromTemplateItem);
-                contextMenu.show(fileOptionsButton, e.getX() - 180, e.getY());
+                contextMenu.show(fileOptionsButton, e.getX() - 160, e.getY());
             }
         });
         
