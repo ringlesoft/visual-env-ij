@@ -15,7 +15,17 @@
     </ul>
     <p><b>Supported Frameworks:</b> Laravel, Node.js, Django, Generic (with more coming soon)</p>
     ]]></description>
-
+    <change-notes><![CDATA[
+            <h3>1.0.2</h3>
+            <ul>
+                <li>Removed unnecessary dependencies</li>
+                <li>Now watches creation and deletion of .env files within the project workspace</li>
+                <li>You can now create .env files from .env.example templates</li>
+                <li>Ui improvements</li>
+                <li>Multiple Bug Fixes</li>
+            </ul>
+        ]]>
+    </change-notes>
     <depends>com.intellij.modules.platform</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
@@ -23,7 +33,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.ringlesoft.visualenv.toolWindow.VisualEnvToolWindowFactory" id="Visual Env"
                     anchor="right" secondary="true" icon="AllIcons.Actions.Preview"/>
-        <postStartupActivity implementation="com.ringlesoft.visualenv.startup.ProjectStartupActivity" />
+        <postStartupActivity implementation="com.ringlesoft.visualenv.startup.ProjectStartupActivity"/>
         <notificationGroup id="Visual Env Notification Group" displayType="BALLOON" bundle="messages.MyBundle"
                            key="notification.group.visual.env.notification.group"/>
     </extensions>

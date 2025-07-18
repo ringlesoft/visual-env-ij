@@ -56,10 +56,10 @@ public final class EnvFileService {
      */
     public List<EnvVariable> parseEnvFile(VirtualFile file) {
         List<EnvVariable> variables = new ArrayList<>();
-        
+
         // Store file as active
         activeEnvFile = file;
-        
+
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -118,7 +118,7 @@ public final class EnvFileService {
             LOG.error("No active env file");
             return false;
         }
-        
+
         try {
             // Use EnvFileManager to update the variable
             EnvFileManager.setEnvVariable(project, activeEnvFile, name, value);
@@ -131,7 +131,7 @@ public final class EnvFileService {
             return false;
         }
     }
-    
+
     /**
      * Get all environment variables from all loaded files
      *
@@ -154,28 +154,29 @@ public final class EnvFileService {
         if (basePath == null) {
             return;
         }
+        List<VirtualFile> foundFiles = new ArrayList<>();
         ProjectService projectService = project.getService(ProjectService.class);
         List<EnvFileDefinition> envFileDefinitions = activeProfile.getEnvFileDefinitions(); // Add null check>
         for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
             VirtualFile envFile = LocalFileSystem.getInstance().findFileByPath(Path.of(basePath, envFileDefinition.getName()).toString());
             if (envFile != null) {
                 // Parse existing .env file but do it safely
-                    parseEnvFile(envFile);
-                if (envFileDefinition.isPrimary()) {
-
+                parseEnvFile(envFile);
+                if (envFileDefinition.isPrimary() && activeEnvFile == null) {
                     projectService.setActiveEnvFile(envFileDefinition.getName());
                 }
-
+                foundFiles.add(envFile);
             }
         }
-        if(fileEnvVariables.isEmpty()) {
+        if (foundFiles.isEmpty()) {
+            fileEnvVariables.clear();
             activeEnvFile = null;
             projectService.setActiveEnvFile(null);
         }
     }
 
     public void rescanEnvFiles() {
-            scanAndProcessEnvFiles();
+        scanAndProcessEnvFiles();
     }
 
 
@@ -518,7 +519,6 @@ public final class EnvFileService {
 //
 //        return null;
 //    }
-
 
 
 //    /**

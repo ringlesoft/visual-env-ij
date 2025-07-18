@@ -469,7 +469,7 @@ public class EnvFileManager {
         // Remove old and add new in a single transaction
         WriteCommandAction.runWriteCommandAction(project, "Rename Environment Variable", null, () -> {
             removeEnvVariable(project, envFile, oldKey);
-            setEnvVariable(project, envFile, newKey, value);
+            setEnvVariable(project, envFile, newKey, value.replaceAll("\"", ""));
         });
 
         return true;

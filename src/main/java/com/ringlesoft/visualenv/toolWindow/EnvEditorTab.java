@@ -1,5 +1,7 @@
 package com.ringlesoft.visualenv.toolWindow;
 
+import com.intellij.icons.AllIcons;
+import javax.swing.SwingConstants;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -10,16 +12,20 @@ import com.intellij.util.ui.JBUI;
 import com.ringlesoft.visualenv.listeners.FileSaveListener;
 import com.ringlesoft.visualenv.model.EnvFileDefinition;
 import com.ringlesoft.visualenv.model.EnvVariable;
+import com.ringlesoft.visualenv.profile.GenericProfile;
 import com.ringlesoft.visualenv.services.EnvFileService;
 import com.ringlesoft.visualenv.services.ProjectService;
 import com.ringlesoft.visualenv.ui.VisualEnvTheme;
 import com.ringlesoft.visualenv.utils.EnvFileManager;
+import org.apache.maven.model.Profile;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -79,14 +85,14 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
      */
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        // Create a panel with custom layout to achieve the 3:2:1 ratio
+        // Create a panel with custom layout: Filter (50%) | ComboBox + Button (50%)
         JPanel fileSelectorPanel = new JPanel();
         fileSelectorPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = JBUI.insetsRight(5);  // Add some spacing between components
         
-        // Filter field taking 3/6 of space
+        // Filter field taking 50% of space
         filterField = new JBTextField();
         filterField.setToolTipText("Search");
         filterField.putClientProperty("placeholder.text", "Search");
@@ -108,13 +114,10 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
         });
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0.5;  // 3/6 of space
+        gbc.weightx = 0.5;  // 50% of space
         fileSelectorPanel.add(filterField, gbc);
         
-        // File label and dropdown taking 2/6 of space
-        JPanel filePanel = new JPanel(new BorderLayout(5, 0));
-//        filePanel.add(new JBLabel("File:"), BorderLayout.WEST);
-        
+        // ComboBox taking flexible space within the remaining 50%
         envFileSelector = new ComboBox<>();
         envFileSelector.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -125,24 +128,68 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
                 }
             }
         });
-        filePanel.add(envFileSelector, BorderLayout.CENTER);
         
         gbc.gridx = 1;
-        gbc.weightx = 0.1;  // 2/6 of space
-        fileSelectorPanel.add(filePanel, gbc);
+        gbc.weightx = 0.5;  // Flexible space within remaining 50%
+        gbc.insets = JBUI.insets(0, 5);  // top, left, bottom, right spacing
+        fileSelectorPanel.add(envFileSelector, gbc);
         
-        // Refresh button taking 1/6 of space
-        JButton refreshButton = new JButton();
-        refreshButton.setText("↻");
-        refreshButton.setToolTipText("Refresh");
-        refreshButton.setPreferredSize(new Dimension(30, 30));
-        refreshButton.setForeground(VisualEnvTheme.PRIMARY);
-        refreshButton.addActionListener(e -> reloadCurrentEnvFile());
+        // Settings button with fixed width (30px)
+        JButton fileOptionsButton
+                = new JButton();
+        fileOptionsButton
+                .setIcon(AllIcons.General.Settings);
+        fileOptionsButton
+                .setToolTipText("Actions");
+        fileOptionsButton
+                .setPreferredSize(new Dimension(25, 25));
+        fileOptionsButton
+                .setMinimumSize(new Dimension(25, 25));
+        fileOptionsButton
+                .setMaximumSize(new Dimension(25, 25));
+        fileOptionsButton
+                .setBorderPainted(false);
+        fileOptionsButton
+                .setContentAreaFilled(false);
+        
+        // Create context menu
+        JPopupMenu contextMenu = new JPopupMenu();
+        
+        // Refresh action
+        JMenuItem refreshItem = new JMenuItem("Refresh");
+        refreshItem.setIcon(AllIcons.Actions.Refresh);
+        refreshItem.setHorizontalAlignment(SwingConstants.LEFT);
+        refreshItem.setPreferredSize(new Dimension(170, 25));
+        refreshItem.addActionListener(e -> reloadCurrentEnvFile());
+        addHoverEffect(refreshItem);
+        contextMenu.add(refreshItem);
+        
+        // Conditional create from template action
+        JMenuItem createFromTemplateItem = new JMenuItem("Copy Template");
+        createFromTemplateItem.setToolTipText("Create a new environment file from the current template");
+        createFromTemplateItem.setIcon(AllIcons.Actions.Copy);
+        createFromTemplateItem.setHorizontalAlignment(SwingConstants.LEFT);
+        createFromTemplateItem.setPreferredSize(new Dimension(170, 25));
+        createFromTemplateItem.addActionListener(e -> createEnvFromCurrentTemplate());
+        addHoverEffect(createFromTemplateItem);
+        
+        // Add mouse listener to show context menu
+        fileOptionsButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // Update conditional menu item visibility before showing
+                updateCreateFromTemplateVisibility(createFromTemplateItem);
+                contextMenu.show(fileOptionsButton, e.getX() - 160, e.getY());
+            }
+        });
+        
+        contextMenu.add(createFromTemplateItem);
         
         gbc.gridx = 2;
-        gbc.weightx = 0.17;  // 1/6 of space
-        gbc.insets = JBUI.emptyInsets();  // Remove right margin for last component
-        fileSelectorPanel.add(refreshButton, gbc);
+        gbc.weightx = 0.0;  // Fixed width - no expansion
+        gbc.insets = JBUI.insetsLeft(5);  // Left margin only
+        fileSelectorPanel.add(fileOptionsButton
+                , gbc);
         
         panel.add(fileSelectorPanel, BorderLayout.NORTH);
         
@@ -177,32 +224,41 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
      * Load all available .env files in the project
      */
     public void loadEnvFiles() {
-        String basePath = project.getBasePath();
-        if (basePath == null) return;
-        
-        File baseDir = new File(basePath);
-        if (!baseDir.exists() || !baseDir.isDirectory()) return;
-        
         envFileSelector.removeAllItems();
         fileBasenameToPath.clear();
         
-        // Get common env filenames from the active profile
-        String[] commonEnvFiles = envFileService.getActiveProfile().getCommonEnvFiles();
-        List<EnvFileDefinition> envFileDefinitions = envFileService.getActiveProfile().getEnvFileDefinitions();
+        // Get files from EnvFileService that have been scanned and loaded
+        Map<VirtualFile, List<EnvVariable>> fileEnvVariables = envFileService.getFileEnvVariables();
+        VirtualFile activeEnvFile = envFileService.getActiveEnvFile();
+        String activeFileName = null;
         
-        // Look for these files in the project root
-        for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
-            File envFile = new File(baseDir, envFileDefinition.getName());
-            if (envFile.exists() && envFile.isFile()) {
-                String absolutePath = envFile.getAbsolutePath();
-                String basename = envFile.getName();
+        // Add files from the service, but verify they still exist
+        for (VirtualFile virtualFile : fileEnvVariables.keySet()) {
+            if (virtualFile != null && virtualFile.exists() && virtualFile.isValid()) {
+                String absolutePath = virtualFile.getPath();
+                String basename = virtualFile.getName();
                 fileBasenameToPath.put(basename, absolutePath);
                 envFileSelector.addItem(basename);
+                
+                // Remember the active file name for selection
+
+                if(activeEnvFile == null) {
+                    EnvFileDefinition definition = envFileService.getEnvFileDefinitionForFile(virtualFile);
+                    if (definition != null && definition.isPrimary()) {
+                        activeFileName = basename;
+                    }
+                } else {
+                    if (virtualFile.equals(activeEnvFile)) {
+                        activeFileName = basename;
+                    }
+                }
             }
         }
         
-        // Load the first file if available
-        if (envFileSelector.getItemCount() > 0) {
+        // Set the active file as selected if it exists in the list
+        if (activeFileName != null && envFileSelector.getItemCount() > 0) {
+            envFileSelector.setSelectedItem(activeFileName);
+        } else if (envFileSelector.getItemCount() > 0) {
             envFileSelector.setSelectedIndex(0);
         }
     }
@@ -375,5 +431,77 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
         if (savedFile != null) {
             reloadCurrentEnvFile(); // This is expensive for now
         }
+    }
+
+    /**
+     * Add hover effect to menu items (similar to EnvGroupPanel implementation)
+     */
+    private void addHoverEffect(JMenuItem item) {
+        Color originalBg = item.getBackground();
+        Color hoverBg = VisualEnvTheme.BACKGROUND_HIGHLIGHT;
+
+        item.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                item.setBackground(hoverBg);
+                item.setOpaque(true);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                item.setBackground(originalBg);
+                item.setOpaque(false);
+            }
+        });
+    }
+
+    /**
+     * Create a primary .env file from the currently selected template file
+     */
+    private void createEnvFromCurrentTemplate() {
+        if (selectedEnvFile == null) {
+            return;
+        }
+
+        // Get the definition for the current file
+        EnvFileDefinition definition = envFileService.getEnvFileDefinitionForFile(selectedEnvFile);
+        if (definition == null || !definition.isTemplate()) {
+            return;
+        }
+
+        // Create the primary file from the template
+        boolean success = envFileService.createEnvFromTemplate(selectedEnvFile);
+        if (success) {
+            // Reload the file list to show the new file
+            loadEnvFiles();
+            // Show success message
+            updateStatus("Created .env file from template successfully");
+        } else {
+            updateStatus("Failed to create .env file from template");
+        }
+    }
+
+    /**
+     * Update the visibility of the "Create from template" menu item
+     */
+    private void updateCreateFromTemplateVisibility(JMenuItem createFromTemplateItem) {
+        boolean shouldShow = false;
+
+        if (selectedEnvFile != null && !(envFileService.getActiveProfile() instanceof GenericProfile)) {
+            // Check if current file is a template
+            EnvFileDefinition definition = envFileService.getEnvFileDefinitionForFile(selectedEnvFile);
+            if (definition != null && definition.isTemplate()) {
+                // Check if there's no primary file in the project
+                boolean hasPrimaryFile = envFileService.getFileEnvVariables().keySet().stream()
+                    .anyMatch(file -> {
+                        EnvFileDefinition def = envFileService.getEnvFileDefinitionForFile(file);
+                        return def != null && def.isPrimary();
+                    });
+                
+                shouldShow = !hasPrimaryFile;
+            }
+        }
+
+        createFromTemplateItem.setVisible(shouldShow);
     }
 }

@@ -103,10 +103,22 @@ public class GenericProfile implements EnvProfile {
     @Override
     public List<EnvFileDefinition> getEnvFileDefinitions() {
         List<EnvFileDefinition> definitions = new ArrayList<>();
-        
+
         // Primary .env file
         definitions.add(EnvFileDefinition.createPrimaryEnv());
-        
+
+        // Template file
+        definitions.add(EnvFileDefinition.createEnvExample());
+
+        // Testing environment
+        definitions.add(EnvFileDefinition.createTestingEnv());
+
+        // Local overrides
+        definitions.add(EnvFileDefinition.createLocalEnv());
+
+        // Production environment
+        definitions.add(EnvFileDefinition.createProductionEnv());
+
         // Local overrides
         definitions.add(EnvFileDefinition.createLocalEnv());
         
