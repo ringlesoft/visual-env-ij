@@ -84,7 +84,11 @@ public class EnvGroupPanel extends JPanel {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 expanded = !expanded;
                 expandIcon.setText(expanded ? "-" : "+");
-                variablesPanel.setVisible(expanded);
+                
+                // Update variables panel visibility based on expansion state and current filter
+                boolean hasVisibleVariables = hasMatchingVariables();
+                variablesPanel.setVisible(expanded && hasVisibleVariables);
+                
                 revalidate();
                 repaint();
             }
@@ -364,8 +368,12 @@ public class EnvGroupPanel extends JPanel {
             }
         }
         
-        // Update visibility based on expanded state and if there are visible variables
-        updatePanelVisibility(visibleCount > 0);
+        // Update panel visibility: show the entire panel if there are matching variables
+        boolean hasMatches = visibleCount > 0;
+        setVisible(hasMatches);
+        
+        // Update variables content visibility: show content only if expanded AND has matches
+        variablesPanel.setVisible(hasMatches && expanded);
         
         // Update the maximum size based on preferred size after content changes
         updateMaximumSize();
@@ -471,11 +479,6 @@ public class EnvGroupPanel extends JPanel {
         // Store the timer
         debounceTimers.put(variableName, timer);
     }
-    
-    private void updatePanelVisibility(boolean visible) {
-        variablesPanel.setVisible(visible && expanded);
-        setVisible(visible && expanded);
-    }
 
     private void showRenameDialog(EnvVariable variable) {
         // Create a modal dialog for adding a new variable
@@ -575,6 +578,16 @@ public class EnvGroupPanel extends JPanel {
             return input.substring(0, 1).toUpperCase() + input.substring(1);
         }
         return input;
+    }
+
+    private boolean hasMatchingVariables() {
+        if (currentFilter == null || currentFilter.isEmpty()) {
+            return true;
+        }
+        
+        return variables.stream()
+            .anyMatch(v -> v.getName().toLowerCase().contains(currentFilter) ||
+                    v.getValue().toLowerCase().contains(currentFilter));
     }
 
 }
