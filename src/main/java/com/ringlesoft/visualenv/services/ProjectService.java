@@ -28,6 +28,7 @@ public final class ProjectService {
 
 
     public ProjectService(Project project) {
+        this.project = project;
         LOG.info(VisualEnvBundle.message("projectService", project.getName()));
     }
 

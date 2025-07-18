@@ -104,7 +104,6 @@ public class EnvFileWatcher {
 
     private void handleFileDeleted(VirtualFile file) {
         System.out.println(".env file deleted: " + file.getName());
-
         SwingUtilities.invokeLater(() -> {
             EnvFileService envFileService = project.getService(EnvFileService.class);
             envFileService.rescanEnvFiles();

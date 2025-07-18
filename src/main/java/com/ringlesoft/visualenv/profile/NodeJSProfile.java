@@ -144,8 +144,11 @@ public class NodeJSProfile implements EnvProfile {
         // Environment-specific files
         definitions.add(EnvFileDefinition.createDevelopmentEnv());
         definitions.add(EnvFileDefinition.createProductionEnv());
+
+        // env.testing
+        definitions.add(EnvFileDefinition.createTestingEnv());
         
-        // Testing environment
+        // Testing environment env.test
         EnvFileDefinition testEnv = new EnvFileDefinition(
                 ".env.test",
                 "Environment variables for testing",

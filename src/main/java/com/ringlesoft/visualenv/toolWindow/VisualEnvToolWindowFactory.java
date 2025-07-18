@@ -39,6 +39,11 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         this.project = project;
         this.envService = project.getService(EnvFileService.class);
         this.projectService = project.getService(ProjectService.class);
+        
+        // Initialize the project service and scan for .env files
+        // This ensures files are scanned before the UI is created
+        projectService.initialize();
+        
         envFileWatcher = new EnvFileWatcher(project, this);
         envFileWatcher.startWatching();
         mainPanel = new JPanel(new BorderLayout());
@@ -53,6 +58,39 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
     }
 
     private void createComponents() {
+        // Check if there are any .env files in the project
+        if (envService.getFileEnvVariables().isEmpty()) {
+            // Show centered message when no .env files are found
+            createEmptyStateUI();
+        } else {
+            // Show normal UI when .env files are available
+            createNormalUI();
+        }
+    }
+
+    /**
+     * Create UI for when no .env files are found in the project
+     */
+    private void createEmptyStateUI() {
+        JPanel emptyPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        JLabel emptyLabel = new JBLabel("No .env files in this project");
+        emptyLabel.setFont(emptyLabel.getFont().deriveFont(Font.PLAIN, 16f));
+        emptyLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        emptyPanel.add(emptyLabel, gbc);
+        
+        mainPanel.add(emptyPanel, BorderLayout.CENTER);
+    }
+
+    /**
+     * Create normal UI when .env files are available
+     */
+    private void createNormalUI() {
         controlPanel = createControlPanel();
         contentPanel = new JPanel(new BorderLayout());
         tabbedPane = new JBTabbedPane();
@@ -70,7 +108,6 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(contentPanel, BorderLayout.CENTER);
-
 
         // Bottom actions
         bottomPanel = new JPanel(new BorderLayout());
@@ -120,25 +157,18 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
      * Update the UI when the profile changes
      */
     public void updateUI() {
-        // Update profile label to match initialization
-        String profileName = envService.getActiveProfile().getProfileName();
-        projectTypeLabel.setText("Profile: " + profileName);
-        // Clear and rebuild the tabs
-        tabbedPane.removeAll();
-        // Create Environment Variables tab
-        JPanel envPanel = new EnvEditorTab(project, envService, projectService);
-        tabbedPane.addTab("Environment Variables", envPanel);
-        // Add Artisan tab if supported by the active profile
-        if (envService.getActiveProfile().supportsArtisanCommands()) {
-            JPanel artisanPanel = createCliActionsPanel();
-            tabbedPane.addTab("CLI Commands", artisanPanel);
+        // Clear the main panel completely
+        mainPanel.removeAll();
+        
+        // Check if there are any .env files and rebuild UI accordingly
+        if (envService.getFileEnvVariables().isEmpty()) {
+            // Show empty state UI
+            createEmptyStateUI();
+        } else {
+            // Rebuild normal UI
+            createNormalUI();
         }
-        // Update bottom panel
-        bottomPanel.removeAll();
-        if (envService.getActiveEnvFile() != null) {
-            addAddVariableButton();
-        }
-
+        
         // Refresh UI
         mainPanel.revalidate();
         mainPanel.repaint();

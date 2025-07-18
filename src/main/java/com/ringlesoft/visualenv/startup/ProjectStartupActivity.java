@@ -35,8 +35,8 @@ public class ProjectStartupActivity implements ProjectActivity {
     }
 
     private void initializeProject(@NotNull Project project) {
-        ProjectService projectService = new ProjectService(project);
-        projectService.initialize();
+//        ProjectService projectService = new ProjectService(project);
+//        projectService.initialize();
     }
 
 }

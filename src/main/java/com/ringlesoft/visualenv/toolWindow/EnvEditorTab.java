@@ -125,6 +125,7 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
                 }
             }
         });
+
         filePanel.add(envFileSelector, BorderLayout.CENTER);
         
         gbc.gridx = 1;
@@ -177,32 +178,41 @@ public class EnvEditorTab extends JPanel implements AutoCloseable {
      * Load all available .env files in the project
      */
     public void loadEnvFiles() {
-        String basePath = project.getBasePath();
-        if (basePath == null) return;
-        
-        File baseDir = new File(basePath);
-        if (!baseDir.exists() || !baseDir.isDirectory()) return;
-        
         envFileSelector.removeAllItems();
         fileBasenameToPath.clear();
         
-        // Get common env filenames from the active profile
-        String[] commonEnvFiles = envFileService.getActiveProfile().getCommonEnvFiles();
-        List<EnvFileDefinition> envFileDefinitions = envFileService.getActiveProfile().getEnvFileDefinitions();
+        // Get files from EnvFileService that have been scanned and loaded
+        Map<VirtualFile, List<EnvVariable>> fileEnvVariables = envFileService.getFileEnvVariables();
+        VirtualFile activeEnvFile = envFileService.getActiveEnvFile();
+        String activeFileName = null;
         
-        // Look for these files in the project root
-        for (EnvFileDefinition envFileDefinition : envFileDefinitions) {
-            File envFile = new File(baseDir, envFileDefinition.getName());
-            if (envFile.exists() && envFile.isFile()) {
-                String absolutePath = envFile.getAbsolutePath();
-                String basename = envFile.getName();
+        // Add files from the service, but verify they still exist
+        for (VirtualFile virtualFile : fileEnvVariables.keySet()) {
+            if (virtualFile != null && virtualFile.exists() && virtualFile.isValid()) {
+                String absolutePath = virtualFile.getPath();
+                String basename = virtualFile.getName();
                 fileBasenameToPath.put(basename, absolutePath);
                 envFileSelector.addItem(basename);
+                
+                // Remember the active file name for selection
+
+                if(activeEnvFile == null) {
+                    EnvFileDefinition definition = envFileService.getEnvFileDefinitionForFile(virtualFile);
+                    if (definition != null && definition.isPrimary()) {
+                        activeFileName = basename;
+                    }
+                } else {
+                    if (virtualFile.equals(activeEnvFile)) {
+                        activeFileName = basename;
+                    }
+                }
             }
         }
         
-        // Load the first file if available
-        if (envFileSelector.getItemCount() > 0) {
+        // Set the active file as selected if it exists in the list
+        if (activeFileName != null && envFileSelector.getItemCount() > 0) {
+            envFileSelector.setSelectedItem(activeFileName);
+        } else if (envFileSelector.getItemCount() > 0) {
             envFileSelector.setSelectedIndex(0);
         }
     }
