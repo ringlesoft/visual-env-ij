@@ -15,9 +15,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ItemEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -481,51 +479,54 @@ public class EnvGroupPanel extends JPanel {
     }
 
     private void showRenameDialog(EnvVariable variable) {
-        // Create a modal dialog for adding a new variable
-        JDialog renameDialog = new JDialog();
-        renameDialog.setTitle("Rename " + variable.getName());
-        renameDialog.setModal(true);
-        renameDialog.setLayout(new BorderLayout());
-
-        // Main form panel with proper spacing
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBorder(JBUI.Borders.empty(20));
-        GridBagConstraints gbc = new GridBagConstraints();
+        // Create custom dialog for renaming a variable
+        CustomDialogWindow renameDialog = new CustomDialogWindow("Rename " + variable.getName());
 
         // Variable Name section
-        gbc.gridx = 0; gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = JBUI.insetsBottom(5);
+        JLabel messagePane = new JLabel();
         JLabel keyLabel = new JLabel("New Name:");
-        formPanel.add(keyLabel, gbc);
-
-        gbc.gridy = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
-        gbc.insets = JBUI.insetsBottom(15);
+        renameDialog.addContent(keyLabel, JBUI.insetsBottom(5));
+        
         JTextField keyField = new JTextField(20);
         keyField.setText(variable.getName());
-        formPanel.add(keyField, gbc);
+        keyField.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String key = keyField.getText();
+                    messagePane.setText("");
+                    if (key.isEmpty()) {
+                        return;
+                    }
+                    if (envFileService.renameVariable(variable.getName(), key)) {
+                        renameDialog.dispose();
+                    } else {
+                        messagePane.setText("Failed to rename variable");
+                    }
+                }
+            }
+        });
+        renameDialog.addContent(keyField, JBUI.insetsBottom(15));
 
         // Message pane for notifications
-        gbc.gridy = 4;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = JBUI.emptyInsets();
-        JLabel messagePane = new JLabel();
         messagePane.setText("");
         messagePane.setForeground(UIManager.getColor("Label.disabledForeground"));
         messagePane.setFont(messagePane.getFont().deriveFont(Font.ITALIC, messagePane.getFont().getSize() - 1f));
-        formPanel.add(messagePane, gbc);
+        renameDialog.addContent(messagePane, JBUI.emptyInsets());
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
-
-        JButton cancelButton = new JButton("Cancel");
-        JButton saveButton = new JButton("Save");
-
-        cancelButton.addActionListener(event -> renameDialog.dispose());
-        saveButton.addActionListener(event -> {
+        // Add buttons
+        renameDialog.addButton("Cancel", event -> renameDialog.dispose());
+        renameDialog.addButton("Save", event -> {
             String key = keyField.getText();
             messagePane.setText("");
             if (key.isEmpty()) {
@@ -538,19 +539,9 @@ public class EnvGroupPanel extends JPanel {
             }
         });
 
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        renameDialog.add(formPanel, BorderLayout.CENTER);
-        renameDialog.add(buttonPanel, BorderLayout.SOUTH);
-
-        renameDialog.pack();
-        renameDialog.setSize(350, renameDialog.getHeight()); // Slightly wider for better proportions
-        renameDialog.setLocationRelativeTo(null); // Center on screen
-
-        // Focus the key field
-        keyField.requestFocus();
-        keyField.selectAll();
-        renameDialog.setVisible(true);
+        // Show dialog and focus the key field
+        renameDialog.showDialog();
+        renameDialog.focusFirstComponent();
     }
 
 

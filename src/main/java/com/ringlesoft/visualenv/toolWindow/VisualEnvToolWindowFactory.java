@@ -175,66 +175,33 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
         JButton addButton = new JButton("+ Add Variable");
         addButton.setAlignmentX(Component.LEFT_ALIGNMENT);
         addButton.addActionListener(e -> {
-            // Create a modal dialog for adding a new variable
-            JDialog dialog = new JDialog();
-            dialog.setTitle("Add New Variable to " + envService.getActiveEnvFile().getName());
-            dialog.setModal(true);
-            dialog.setLayout(new BorderLayout());
-
-            // Main form panel with proper spacing
-            JPanel formPanel = new JPanel(new GridBagLayout());
-            formPanel.setBorder(JBUI.Borders.empty(20));
-            GridBagConstraints gbc = new GridBagConstraints();
+            // Create custom dialog for adding a new variable
+            CustomDialogWindow dialog = new CustomDialogWindow("Add New Variable to " + envService.getActiveEnvFile().getName());
 
             // Variable Name section
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.insets = JBUI.insetsBottom(5);
             JLabel keyLabel = new JLabel("Variable Name:");
-            formPanel.add(keyLabel, gbc);
-
-            gbc.gridy = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1.0;
-            gbc.insets = JBUI.insetsBottom(15);
+            dialog.addContent(keyLabel, JBUI.insetsBottom(5));
+            
             JTextField keyField = new JTextField(20);
-            formPanel.add(keyField, gbc);
+            dialog.addContent(keyField, JBUI.insetsBottom(15));
 
             // Value section
-            gbc.gridy = 2;
-            gbc.fill = GridBagConstraints.NONE;
-            gbc.weightx = 0;
-            gbc.insets = JBUI.insetsBottom(5);
             JLabel valueLabel = new JLabel("Value:");
-            formPanel.add(valueLabel, gbc);
-
-            gbc.gridy = 3;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.weightx = 1.0;
-            gbc.insets = JBUI.insetsBottom(15);
+            dialog.addContent(valueLabel, JBUI.insetsBottom(5));
+            
             JTextField valueField = new JTextField(20);
-            formPanel.add(valueField, gbc);
+            dialog.addContent(valueField, JBUI.insetsBottom(15));
 
             // Message pane for notifications
-            gbc.gridy = 4;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            gbc.insets = JBUI.emptyInsets();
             JLabel messagePane = new JLabel();
             messagePane.setText("");
             messagePane.setForeground(UIManager.getColor("Label.disabledForeground"));
             messagePane.setFont(messagePane.getFont().deriveFont(Font.ITALIC, messagePane.getFont().getSize() - 1f));
-            formPanel.add(messagePane, gbc);
+            dialog.addContent(messagePane, JBUI.emptyInsets());
 
-            // Button panel
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            buttonPanel.setBorder(JBUI.Borders.empty(10, 15, 15, 15));
-
-            JButton cancelButton = new JButton("Cancel");
-            JButton saveButton = new JButton("Add");
-
-            cancelButton.addActionListener(event -> dialog.dispose());
-            saveButton.addActionListener(event -> {
+            // Add buttons
+            dialog.addButton("Cancel", event -> dialog.dispose());
+            dialog.addButton("Add", event -> {
                 String key = keyField.getText();
                 String value = valueField.getText();
                 messagePane.setText("");
@@ -248,20 +215,9 @@ public class VisualEnvToolWindowFactory implements ToolWindowFactory, AutoClosea
                 }
             });
 
-            buttonPanel.add(cancelButton);
-            buttonPanel.add(saveButton);
-
-            dialog.add(formPanel, BorderLayout.CENTER);
-            dialog.add(buttonPanel, BorderLayout.SOUTH);
-
-            dialog.pack();
-            dialog.setSize(350, dialog.getHeight()); // Slightly wider for better proportions
-            dialog.setLocationRelativeTo(null); // Center on screen
-
-            // Focus the key field
-            keyField.requestFocus();
-            keyField.selectAll();
-            dialog.setVisible(true);
+            // Show dialog and focus the key field
+            dialog.showDialog();
+            dialog.focusFirstComponent();
         });
         bottomPanel.add(addButton);
     }
