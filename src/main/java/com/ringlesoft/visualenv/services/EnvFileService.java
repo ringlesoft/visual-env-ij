@@ -56,10 +56,8 @@ public final class EnvFileService {
      */
     public List<EnvVariable> parseEnvFile(VirtualFile file) {
         List<EnvVariable> variables = new ArrayList<>();
-
-        // Store file as active
+        this.fileEnvVariables.put(file, variables);
         activeEnvFile = file;
-
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
