@@ -6,12 +6,12 @@ package com.ringlesoft.visualenv.model;
  * based on their purpose and profile (project type).
  */
 public class EnvFileDefinition {
-    private String name;
-    private String description;
-    private boolean isTemplate;
-    private boolean isEditable;
-    private int priority;
-    private EnvFileType fileType;
+    private final String name;
+    private final String description;
+    private final boolean isTemplate;
+    private final boolean isEditable;
+    private final int priority;
+    private final EnvFileType fileType;
 
     /**
      * Enum representing different types of environment files

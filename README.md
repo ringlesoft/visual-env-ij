@@ -1,6 +1,5 @@
 # Visual Env
 
-![Build](https://img.shields.io/github/workflow/status/ringlesoft/visual-env-ij/Build)
 ![Version](https://img.shields.io/jetbrains/plugin/v/com.ringlesoft.visualenv)
 ![Downloads](https://img.shields.io/jetbrains/plugin/d/com.ringlesoft.visualenv)
 ![Rating](https://img.shields.io/jetbrains/plugin/r/rating/com.ringlesoft.visualenv)
@@ -9,6 +8,8 @@
 **Visual Env** is an IntelliJ plugin that helps developers visualize and manage environment variables within their projects. 
 This plugin makes it easy to see which environment variables are in use, edit their values through a user-friendly interface, and run environment-related CLI commands directly from your IDE.
 <!-- Plugin description end -->
+
+> Install from [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/27920-visual-env)
 
 ## Features
 
@@ -93,8 +94,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 - Thanks to the JetBrains team for their excellent SDK
-- Contributors and users who have provided valuable feedback
+- ALl users who have provided valuable feedback
 
----
+## Support
+If you find this plugin useful, consider 
+- [Buying me a coffee](https://www.buymeacoffee.com/ringunger) to support the development of this plugin.
+- [Sponsoring on GitHub](https://github.com/sponsors/ringlesoft) to support the development of this plugin.
 
-Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template).
+
